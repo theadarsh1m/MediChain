@@ -80,25 +80,12 @@
 
       <nav class="mb-6">
         <div class="border-b border-gray-200 bg-white rounded-t-xl px-4">
-          <ul
-            class="flex flex-wrap -mb-px text-sm font-medium text-center"
-            id="dashboard-tabs"
-          >
+          <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="dashboard-tabs">
             <li class="mr-2">
-              <a
-                href="#"
-                class="inline-block p-4 border-b-2 rounded-t-lg tab-active"
-                data-tab="overview"
-                >Overview</a
-              >
+              <a href="#" class="inline-block p-4 border-b-2 rounded-t-lg tab-active" data-tab="overview">Overview</a>
             </li>
             <li class="mr-2">
-              <a
-                href="#"
-                class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-inactive"
-                data-tab="personal-info"
-                >Personal Info</a
-              >
+              <a href="#" class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-inactive" data-tab="personal-info">Personal Info</a>
             </li>
             <li class="mr-2">
               <a
@@ -158,7 +145,8 @@
                     <%= user.name %>
                   </h3>
                   <p class="text-gray-500">
-                    <%= user.age || 'N/A' %> years • <%= user.gender || 'N/A' %>
+                    <% function getAge(dob) { if (!dob) return 'N/A'; const birth = new Date(dob); const today = new Date(); let age = today.getFullYear() - birth.getFullYear(); const m = today.getMonth() - birth.getMonth(); if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) { age--; } return age; } %>
+                    <%= user.dob ? getAge(user.dob) + ' years' : 'N/A' %> • <%= user.gender || 'N/A' %>
                   </p>
                 </div>
               </div>
@@ -173,33 +161,68 @@
                     ><%= user.email %></span
                   >
                 </div>
-                <% if (user.medicalHistory) { %>
                 <div>
                   <p class="text-gray-500 mb-2">Medical History:</p>
-                  <p class="text-sm text-gray-700">
-                    <%= user.medicalHistory %>
-                  </p>
-                </div>
-                <% } %> <% if (user.allergies) { %>
-                <div>
-                  <p class="text-gray-500 mb-2">Known Allergies:</p>
-                  <div class="flex flex-wrap gap-2">
-                    <% user.allergies.split(',').forEach(allergy => { %>
-                    <span
-                      class="bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded-full"
-                      ><%= allergy.trim() %></span
-                    >
-                    <% }); %>
+                  <div class="space-y-2">
+                    <!-- Surgical Procedures -->
+                    <div>
+                      <p class="text-sm font-medium text-gray-700">Surgical Procedures:</p>
+                      <% if (user.surgicalProcedures && user.surgicalProcedures.length > 0) { %>
+                        <ul class="list-disc list-inside text-sm text-gray-600 ml-2">
+                          <% user.surgicalProcedures.forEach(procedure => { %>
+                            <li><%= procedure %></li>
+                          <% }); %>
+                        </ul>
+                      <% } else { %>
+                        <p class="text-sm text-gray-400 italic ml-2">No surgical procedures recorded</p>
+                      <% } %>
+                    </div>
+                    
+                    <!-- Health Conditions -->
+                    <div>
+                      <p class="text-sm font-medium text-gray-700">Health Conditions:</p>
+                      <% if (user.healthConditions && user.healthConditions.length > 0) { %>
+                        <ul class="list-disc list-inside text-sm text-gray-600 ml-2">
+                          <% user.healthConditions.forEach(condition => { %>
+                            <li><%= condition %></li>
+                          <% }); %>
+                        </ul>
+                      <% } else { %>
+                        <p class="text-sm text-gray-400 italic ml-2">No health conditions recorded</p>
+                      <% } %>
+                    </div>
+
+                    <!-- Past Hospitalizations -->
+                    <div>
+                      <p class="text-sm font-medium text-gray-700">Past Hospitalizations:</p>
+                      <% if (user.pastHospitalizations && user.pastHospitalizations.length > 0) { %>
+                        <ul class="list-disc list-inside text-sm text-gray-600 ml-2">
+                          <% user.pastHospitalizations.forEach(hospitalization => { %>
+                            <li><%= hospitalization %></li>
+                          <% }); %>
+                        </ul>
+                      <% } else { %>
+                        <p class="text-sm text-gray-400 italic ml-2">No hospitalization history recorded</p>
+                      <% } %>
+                    </div>
                   </div>
                 </div>
-                <% } else { %>
+                
+                <!-- Allergies -->
                 <div>
                   <p class="text-gray-500 mb-2">Known Allergies:</p>
-                  <p class="text-sm text-gray-400 italic">
-                    No allergies recorded
-                  </p>
+                  <% if (user.allergies && user.allergies.length > 0) { %>
+                    <div class="flex flex-wrap gap-2">
+                      <% user.allergies.forEach(allergy => { %>
+                        <span class="bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                          <%= allergy %>
+                        </span>
+                      <% }); %>
+                    </div>
+                  <% } else { %>
+                    <p class="text-sm text-gray-400 italic">No allergies recorded</p>
+                  <% } %>
                 </div>
-                <% } %>
               </div>
             </div>
 
@@ -216,11 +239,54 @@
               <p class="text-gray-500 text-sm mb-6">
                 Latest recorded measurements with trends
               </p>
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-blue-50 rounded-lg p-4 flex flex-col items-center shadow">
+                  <span class="text-blue-600 font-semibold">Blood Pressure</span>
+                  <span class="text-2xl font-bold">
+                    <%= (user && user.diagnostics && user.diagnostics.vitalSigns && user.diagnostics.vitalSigns.bloodPressure) ? user.diagnostics.vitalSigns.bloodPressure : 'N/A' %>
+                  </span>
+                  <span class="text-xs text-gray-500">mmHg</span>
+                </div>
+                <div class="bg-red-50 rounded-lg p-4 flex flex-col items-center shadow">
+                  <span class="text-red-600 font-semibold">Heart Rate</span>
+                  <span class="text-2xl font-bold">
+                    <%= (user && user.diagnostics && user.diagnostics.vitalSigns && user.diagnostics.vitalSigns.heartRate) ? user.diagnostics.vitalSigns.heartRate : 'N/A' %>
+                  </span>
+                  <span class="text-xs text-gray-500">BPM</span>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4 flex flex-col items-center shadow">
+                  <span class="text-green-700 font-semibold">BMI</span>
+                  <span class="text-2xl font-bold">
+                    <%= (user && user.diagnostics && user.diagnostics.vitalSigns && user.diagnostics.vitalSigns.bmi) ? user.diagnostics.vitalSigns.bmi : 'N/A' %>
+                  </span>
+                  <span class="text-xs text-gray-500">kg/m²</span>
+                </div>
+                <div class="bg-yellow-50 rounded-lg p-4 flex flex-col items-center shadow">
+                  <span class="text-yellow-700 font-semibold">Sugar Level</span>
+                  <span class="text-2xl font-bold">
+                    <%= (user && user.diagnostics && user.diagnostics.vitalSigns && user.diagnostics.vitalSigns.sugarLevel) ? user.diagnostics.vitalSigns.sugarLevel : 'N/A' %>
+                  </span>
+                  <span class="text-xs text-gray-500">mg/dL</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="mt-6 bg-white p-6 rounded-xl shadow-md"></div>
+          <div class="mt-6 bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center"><i data-lucide="calendar" class="w-5 h-5 mr-2 text-purple-600"></i> Next Appointment</h3>
+            <% if (user && user.admin && user.admin.nextAppointment) { %>
+              <div class="p-4 bg-purple-50 rounded">
+                <p class="font-medium text-gray-800">
+                  <%= new Date(user.admin.nextAppointment).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                </p>
+                <p class="text-sm text-gray-600">
+                  at <%= new Date(user.admin.nextAppointment).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
+                </p>
+              </div>
+            <% } else { %>
+              <p class="text-sm text-gray-400 italic">No upcoming appointments scheduled.</p>
+            <% } %>
+          </div>
         </div>
 
         <div
@@ -273,22 +339,78 @@
                 alt="Profile Picture"
                 class="w-28 h-28 rounded-full object-cover border-4 border-blue-500 shadow-md"
               />
+              <canvas id="cropper-canvas" class="hidden absolute top-0 left-0 w-28 h-28 rounded-full z-10 border-4 border-blue-500 shadow-md"></canvas>
               <label
                 for="profile-pic-input"
-                class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 hidden edit-field"
+                id="profile-pic-change-btn"
+                class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-not-allowed opacity-0 transition-opacity hover:bg-blue-700 edit-only"
+                title="Change profile picture (available in edit mode)"
               >
                 <i data-lucide="camera" class="w-4 h-4"></i>
               </label>
+
+              <!-- Crop Modal (hidden by default) -->
+              <div id="crop-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                <div class="relative max-w-xl w-full mx-4 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 overflow-hidden">
+                  <!-- Frosted glass container -->
+                  <div class="p-6 relative">
+                    <div class="relative mx-auto w-[300px] h-[300px]">
+                      <!-- Outer decorative rings -->
+                      <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500/10 to-blue-600/5"></div>
+                      <div class="absolute inset-[3px] rounded-full bg-gradient-to-b from-white/80 to-white/40 backdrop-blur-xl p-4 border border-white/60">
+                        <!-- Inner glass effect container -->
+                        <div class="relative w-full h-full rounded-full bg-white/90 backdrop-blur-sm shadow-inner overflow-hidden">
+                          <canvas id="crop-modal-canvas" width="256" height="256" class="w-full h-full rounded-full"></canvas>
+                          <!-- Guide circle -->
+                          <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                            <div class="w-[calc(100%-24px)] h-[calc(100%-24px)] rounded-full border-2 border-blue-400/20 shadow-[inset_0_0_8px_rgba(59,130,246,0.1)]"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Frosted glass controls -->
+                    <div class="mt-6 bg-gradient-to-b from-white/60 to-white/40 backdrop-blur-xl rounded-xl border border-white/50 shadow-lg">
+                      <div class="flex items-center justify-between p-3">
+                        <div class="flex items-center gap-2">
+                          <button id="crop-zoom-out" class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-white/60 rounded-lg backdrop-blur-sm transition-all" title="Zoom out">
+                            <i data-lucide="minus" class="w-5 h-5"></i>
+                          </button>
+                          <button id="crop-zoom-in" class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-white/60 rounded-lg backdrop-blur-sm transition-all" title="Zoom in">
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                          </button>
+                          <div class="w-px h-6 bg-gray-200/60"></div>
+                          <button id="crop-rotate-left" class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-white/60 rounded-lg backdrop-blur-sm transition-all" title="Rotate counterclockwise">
+                            <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                          </button>
+                          <button id="crop-rotate-right" class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-white/60 rounded-lg backdrop-blur-sm transition-all" title="Rotate clockwise">
+                            <i data-lucide="rotate-cw" class="w-5 h-5"></i>
+                          </button>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                          <button id="crop-cancel" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white/60 rounded-lg backdrop-blur-sm transition-all">Cancel</button>
+                          <button id="crop-apply" class="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all backdrop-blur-sm">Apply</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             <input
               type="file"
               id="profile-pic-input"
               name="profilePic"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/svg+xml,image/jpg"
               class="hidden"
             />
+            <div id="upload-progress" class="w-28 h-2 bg-gray-200 rounded mt-2 hidden">
+              <div id="progress-bar" class="h-2 bg-blue-500 rounded" style="width:0%"></div>
+            </div>
+            <p id="upload-error" class="text-xs text-red-500 mt-1 hidden"></p>
             <p class="text-sm text-gray-500 mt-2">
-              Upload a clear profile picture
+              Upload a clear profile picture (jpeg, png, svg, jpg, &lt;2MB)
             </p>
           </div>
 
@@ -324,12 +446,12 @@
                       ><%= user.email %></span
                     >
                   </div>
-                  <% if (user.age) { %>
+                  <% if (user.dob) { %>
                   <div class="grid grid-cols-3 gap-2">
                     <span class="text-gray-500">Age</span>
-                    <span class="col-span-2 font-medium text-gray-800"
-                      ><%= user.age %> years</span
-                    >
+                    <span class="col-span-2 font-medium text-gray-800">
+                      <%= getAge(user.dob) %> years
+                    </span>
                   </div>
                   <% } %> <% if (user.gender) { %>
                   <div class="grid grid-cols-3 gap-2">
@@ -390,43 +512,42 @@
                     <label class="text-gray-500 mt-2">Emergency Contact</label>
                     <div class="col-span-2">
                       <div class="display-field font-medium text-gray-800">
-                        <% if (user.emergencyContact &&
-                        user.emergencyContact.phone) { %>
-                        <div class="text-sm">
-                          <p>
-                            <strong
-                              ><%= user.emergencyContact.name || 'N/A'
-                              %></strong
-                            >
-                          </p>
-                          <p class="text-gray-600">
-                            <%= user.emergencyContact.relation || 'N/A' %>
-                          </p>
-                          <p class="text-gray-600">
-                            <%= user.emergencyContact.phone %>
-                          </p>
-                        </div>
-                        <% } else { %> Not specified <% } %>
+                        <% const ec = user.emergencyContact || {}; %>
+                        <% if (ec.name || ec.relation || ec.phone) { %>
+                          <div class="text-sm">
+                            <p>
+                              <strong><%= ec.name || 'N/A' %></strong>
+                            </p>
+                            <p class="text-gray-600">
+                              <%= ec.relation || 'N/A' %>
+                            </p>
+                            <p class="text-gray-600">
+                              <%= ec.phone || 'N/A' %>
+                            </p>
+                          </div>
+                        <% } else { %>
+                          Not specified
+                        <% } %>
                       </div>
                       <div class="edit-field hidden space-y-2">
                         <input
                           type="text"
                           name="emergencyContactName"
-                          value="<%= user.emergencyContact && user.emergencyContact.name ? user.emergencyContact.name : '' %>"
+                          value="<%= ec.name || '' %>"
                           class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="Contact name"
                         />
                         <input
                           type="text"
                           name="emergencyContactRelation"
-                          value="<%= user.emergencyContact && user.emergencyContact.relation ? user.emergencyContact.relation : '' %>"
+                          value="<%= ec.relation || '' %>"
                           class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="Relationship (e.g., Spouse, Parent)"
                         />
                         <input
                           type="tel"
                           name="emergencyContactPhone"
-                          value="<%= user.emergencyContact && user.emergencyContact.phone ? user.emergencyContact.phone : '' %>"
+                          value="<%= ec.phone || '' %>"
                           class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="Phone number"
                         />
@@ -443,26 +564,71 @@
                 <div class="space-y-3 text-sm mb-6">
                   <div>
                     <p class="text-gray-500 mb-2">Medical History:</p>
-                    <p class="font-medium text-gray-800">
-                      <%= user.medicalHistory || 'No medical history recorded'
-                      %>
-                    </p>
+                    <div class="space-y-2">
+                      <!-- Surgical Procedures -->
+                      <div>
+                        <span class="font-semibold">Surgical Procedures:</span>
+                        <% if (user.medicalHistory && user.medicalHistory.surgicalProcedures && user.medicalHistory.surgicalProcedures.length > 0) { %>
+                          <ul class="list-disc list-inside ml-4">
+                            <% user.medicalHistory.surgicalProcedures.forEach(function(proc) { %>
+                              <li><%= proc %></li>
+                            <% }); %>
+                          </ul>
+                        <% } else { %>
+                          <span class="text-gray-400 italic">None recorded</span>
+                        <% } %>
+                      </div>
+                      <!-- Health Conditions -->
+                      <div>
+                        <span class="font-semibold">Health Conditions:</span>
+                        <% if (user.medicalHistory && user.medicalHistory.healthConditions && user.medicalHistory.healthConditions.length > 0) { %>
+                          <ul class="list-disc list-inside ml-4">
+                            <% user.medicalHistory.healthConditions.forEach(function(cond) { %>
+                              <li><%= cond %></li>
+                            <% }); %>
+                          </ul>
+                        <% } else { %>
+                          <span class="text-gray-400 italic">None recorded</span>
+                        <% } %>
+                      </div>
+                      <!-- Vaccination Records -->
+                      <div>
+                        <span class="font-semibold">Vaccination Records:</span>
+                        <% if (user.medicalHistory && user.medicalHistory.vaccinationRecords && user.medicalHistory.vaccinationRecords.length > 0) { %>
+                          <ul class="list-disc list-inside ml-4">
+                            <% user.medicalHistory.vaccinationRecords.forEach(function(vac) { %>
+                              <li><%= vac %></li>
+                            <% }); %>
+                          </ul>
+                        <% } else { %>
+                          <span class="text-gray-400 italic">None recorded</span>
+                        <% } %>
+                      </div>
+                      <!-- Past Hospitalizations -->
+                      <div>
+                        <span class="font-semibold">Past Hospitalizations:</span>
+                        <% if (user.medicalHistory && user.medicalHistory.pastHospitalizations && user.medicalHistory.pastHospitalizations.length > 0) { %>
+                          <ul class="list-disc list-inside ml-4">
+                            <% user.medicalHistory.pastHospitalizations.forEach(function(hosp) { %>
+                              <li><%= hosp %></li>
+                            <% }); %>
+                          </ul>
+                        <% } else { %>
+                          <span class="text-gray-400 italic">None recorded</span>
+                        <% } %>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <p class="text-gray-500 mb-2">Allergies:</p>
-                    <% if (user.allergies) { %>
-                    <div class="flex flex-wrap gap-2">
-                      <% user.allergies.split(',').forEach(allergy => { %>
-                      <span
-                        class="bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded-full"
-                        ><%= allergy.trim() %></span
-                      >
-                      <% }); %>
-                    </div>
+                    <% if (user.medicalHistory && user.medicalHistory.allergies && user.medicalHistory.allergies.length > 0) { %>
+                      <div class="flex flex-wrap gap-2">
+                        <% user.medicalHistory.allergies.forEach(function(allergy) { %>
+                          <span class="bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded-full"><%= allergy %></span>
+                        <% }); %>
+                      </div>
                     <% } else { %>
-                    <p class="font-medium text-gray-400 italic">
-                      No allergies recorded
-                    </p>
+                      <p class="font-medium text-gray-400 italic">No allergies recorded</p>
                     <% } %>
                   </div>
                 </div>
@@ -475,13 +641,29 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        lucide.createIcons();
-
+        // DOM elements (declare once)
         const tabs = document.querySelectorAll("#dashboard-tabs a");
-        const panels = document.querySelectorAll(
-          "#dashboard-content .tab-panel"
-        );
+        const panels = document.querySelectorAll("#dashboard-content .tab-panel");
+        const editBtn = document.getElementById("edit-info-btn");
+        const saveBtn = document.getElementById("save-info-btn");
+        const cancelBtn = document.getElementById("cancel-edit-btn");
+        const form = document.getElementById("patient-update-form");
+        const displayFields = document.querySelectorAll(".display-field");
+        const editFields = document.querySelectorAll(".edit-field");
+        const messageDiv = document.getElementById("update-message");
+        const messageText = document.getElementById("message-text");
+        const messageIcon = document.getElementById("message-icon");
+        const profilePicInput = document.getElementById("profile-pic-input");
+        const profilePic = document.getElementById("profile-pic");
+        const cropperCanvas = document.getElementById("cropper-canvas");
+        const uploadProgress = document.getElementById("upload-progress");
+        const progressBar = document.getElementById("progress-bar");
+        const uploadError = document.getElementById("upload-error");
+        let croppedBlob = null;
+        let cropper = null;
+        let originalValues = {};
 
+        // Tab switching
         tabs.forEach((tab) => {
           tab.addEventListener("click", (e) => {
             e.preventDefault();
@@ -503,46 +685,10 @@
         });
 
         // --- Patient Info Editing Functionality ---
-        const editBtn = document.getElementById("edit-info-btn");
-        const saveBtn = document.getElementById("save-info-btn");
-        const cancelBtn = document.getElementById("cancel-edit-btn");
-        const form = document.getElementById("patient-update-form");
-        const displayFields = document.querySelectorAll(".display-field");
-        const editFields = document.querySelectorAll(".edit-field");
-        const messageDiv = document.getElementById("update-message");
-        const messageText = document.getElementById("message-text");
-        const messageIcon = document.getElementById("message-icon");
-        const profilePicInput = document.getElementById("profile-pic-input");
-        let originalValues = {};
-
-        function showMessage(message, type = "success") {
-          messageText.textContent = message;
-          messageDiv.className = "mb-4 p-3 rounded-lg";
-          if (type === "success") {
-            messageDiv.classList.add(
-              "bg-green-50",
-              "border",
-              "border-green-200",
-              "text-green-800"
-            );
-            messageIcon.setAttribute("data-lucide", "check-circle");
-          } else {
-            messageDiv.classList.add(
-              "bg-red-50",
-              "border",
-              "border-red-200",
-              "text-red-800"
-            );
-            messageIcon.setAttribute("data-lucide", "alert-circle");
-          }
-          messageDiv.classList.remove("hidden");
-          lucide.createIcons();
-          setTimeout(() => {
-            messageDiv.classList.add("hidden");
-          }, 5000);
-        }
+        let isEditMode = false; // Track edit mode state globally
 
         function toggleEditMode(editing) {
+          isEditMode = editing;
           if (editing) {
             editFields.forEach((field) => {
               originalValues[field.name] = field.value;
@@ -552,66 +698,420 @@
             editBtn.classList.add("hidden");
             saveBtn.classList.remove("hidden");
             cancelBtn.classList.remove("hidden");
+            // Enable profile pic editing
+            document.getElementById('profile-pic-change-btn').classList.remove('opacity-0', 'cursor-not-allowed');
+            document.getElementById('profile-pic-change-btn').classList.add('cursor-pointer');
           } else {
             displayFields.forEach((field) => field.classList.remove("hidden"));
             editFields.forEach((field) => field.classList.add("hidden"));
             editBtn.classList.remove("hidden");
             saveBtn.classList.add("hidden");
             cancelBtn.classList.add("hidden");
+            // Disable profile pic editing
+            document.getElementById('profile-pic-change-btn').classList.add('opacity-0', 'cursor-not-allowed');
+            document.getElementById('profile-pic-change-btn').classList.remove('cursor-pointer');
+            // Hide crop modal if open
+            if (cropModal) cropModal.classList.add('hidden');
+            modalImg = null;
+            if (profilePicInput) profilePicInput.value = '';
           }
           lucide.createIcons();
         }
 
-        editBtn.addEventListener("click", () => toggleEditMode(true));
+        // Image validation: open crop modal for valid selection
+        // Use let so we can recreate or re-query these if needed
+        let cropModal = document.getElementById('crop-modal');
+        let cropModalCanvas = document.getElementById('crop-modal-canvas');
+        let cropZoomIn = document.getElementById('crop-zoom-in');
+        let cropZoomOut = document.getElementById('crop-zoom-out');
+        let cropRotateLeft = document.getElementById('crop-rotate-left');
+        let cropRotateRight = document.getElementById('crop-rotate-right');
+        let cropCancel = document.getElementById('crop-cancel');
+        let cropApply = document.getElementById('crop-apply');
 
+        let modalImg = null;
+        let modalState = { scale: 1, rotation: 0, tx: 0, ty: 0, dragging: false, sx: 0, sy: 0 };
+
+        const MIN_IMAGE_DIM = 128; // min width/height for acceptable profile picture
+
+        function ensureModalExists() {
+          // Re-query in case DOM changed or modal wasn't present at initial load
+          cropModal = document.getElementById('crop-modal');
+          cropModalCanvas = document.getElementById('crop-modal-canvas');
+          cropZoomIn = document.getElementById('crop-zoom-in');
+          cropZoomOut = document.getElementById('crop-zoom-out');
+          cropRotateLeft = document.getElementById('crop-rotate-left');
+          cropRotateRight = document.getElementById('crop-rotate-right');
+          cropCancel = document.getElementById('crop-cancel');
+          cropApply = document.getElementById('crop-apply');
+
+          // If modal is missing, create a simple fallback modal and append to body
+          if (!cropModal) {
+            console.warn('[DEBUG] crop modal missing; creating fallback modal');
+            const container = document.createElement('div');
+            container.id = 'crop-modal';
+            container.className = 'hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60';
+            container.innerHTML = `
+              <div class="bg-white rounded-lg p-4 shadow-lg w-80">
+                <div class="relative w-64 h-64 mx-auto">
+                  <canvas id="crop-modal-canvas" width="256" height="256" class="rounded-full border-2 border-blue-400"></canvas>
+                  <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div class="w-56 h-56 border-2 border-blue-400 rounded-full"></div>
+                  </div>
+                </div>
+                <div class="mt-3 flex justify-center gap-2">
+                  <button id="crop-zoom-in" class="px-3 py-1 bg-gray-100 rounded">+</button>
+                  <button id="crop-zoom-out" class="px-3 py-1 bg-gray-100 rounded">-</button>
+                  <button id="crop-rotate-left" class="px-3 py-1 bg-gray-100 rounded">⟲</button>
+                  <button id="crop-rotate-right" class="px-3 py-1 bg-gray-100 rounded">⟳</button>
+                </div>
+                <div class="mt-3 flex justify-between">
+                  <button id="crop-cancel" class="px-3 py-1 bg-gray-100 rounded">Cancel</button>
+                  <button id="crop-apply" class="px-3 py-1 bg-blue-600 text-white rounded">Apply</button>
+                </div>
+              </div>`;
+            document.body.appendChild(container);
+
+            // re-query newly created elements
+            cropModal = document.getElementById('crop-modal');
+            cropModalCanvas = document.getElementById('crop-modal-canvas');
+            cropZoomIn = document.getElementById('crop-zoom-in');
+            cropZoomOut = document.getElementById('crop-zoom-out');
+            cropRotateLeft = document.getElementById('crop-rotate-left');
+            cropRotateRight = document.getElementById('crop-rotate-right');
+            cropCancel = document.getElementById('crop-cancel');
+            cropApply = document.getElementById('crop-apply');
+          }
+        }
+
+        function attachModalListeners() {
+          if (!cropModalCanvas) return;
+          // wheel zoom
+          cropModalCanvas.addEventListener('wheel', (ev) => {
+            ev.preventDefault();
+            const delta = ev.deltaY < 0 ? 0.08 : -0.08;
+            modalState.scale = Math.max(0.5, Math.min(3, modalState.scale + delta));
+            renderModal();
+          }, { passive: false });
+
+          // moving cursor overlay: create if missing, attach pointer handlers
+          try {
+            const parent = cropModalCanvas.parentElement || cropModal;
+            let cursor = parent.querySelector('#crop-cursor');
+            if (!cursor) {
+              cursor = document.createElement('div');
+              cursor.id = 'crop-cursor';
+              // style: small semi-transparent circle with border
+              cursor.style.position = 'absolute';
+              cursor.style.width = '18px';
+              cursor.style.height = '18px';
+              cursor.style.border = '2px solid rgba(59,130,246,0.95)';
+              cursor.style.background = 'rgba(59,130,246,0.15)';
+              cursor.style.borderRadius = '50%';
+              cursor.style.pointerEvents = 'none';
+              cursor.style.transform = 'translate(-50%, -50%)';
+              cursor.style.display = 'none';
+              cursor.style.zIndex = 30;
+              parent.appendChild(cursor);
+            }
+
+            function setCursorAt(clientX, clientY) {
+              const rect = cropModalCanvas.getBoundingClientRect();
+              // clamp inside canvas
+              const x = Math.max(rect.left, Math.min(clientX, rect.right));
+              const y = Math.max(rect.top, Math.min(clientY, rect.bottom));
+              // position relative to parent
+              const parentRect = parent.getBoundingClientRect();
+              const left = x - parentRect.left;
+              const top = y - parentRect.top;
+              cursor.style.left = left + 'px';
+              cursor.style.top = top + 'px';
+              cursor.style.display = 'block';
+            }
+
+            cropModalCanvas.addEventListener('mousemove', (ev) => {
+              setCursorAt(ev.clientX, ev.clientY);
+            });
+            cropModalCanvas.addEventListener('mouseenter', (ev) => {
+              setCursorAt(ev.clientX, ev.clientY);
+            });
+            cropModalCanvas.addEventListener('mouseleave', () => {
+              cursor.style.display = 'none';
+            });
+
+            // touch support
+            cropModalCanvas.addEventListener('touchmove', (ev) => {
+              if (!ev.touches || ev.touches.length === 0) return;
+              const t = ev.touches[0];
+              setCursorAt(t.clientX, t.clientY);
+            }, { passive: true });
+            cropModalCanvas.addEventListener('touchstart', (ev) => {
+              if (!ev.touches || ev.touches.length === 0) return;
+              const t = ev.touches[0];
+              setCursorAt(t.clientX, t.clientY);
+            }, { passive: true });
+
+          } catch (e) {
+            console.warn('[DEBUG] failed to attach crop cursor:', e);
+          }
+
+          // existing drag listeners are global; cancel if already attached
+        }
+
+        function renderModal() {
+          const ctx = cropModalCanvas.getContext('2d');
+          ctx.clearRect(0, 0, cropModalCanvas.width, cropModalCanvas.height);
+          if (!modalImg) return;
+          ctx.save();
+          ctx.translate(128 + modalState.tx, 128 + modalState.ty);
+          ctx.rotate((modalState.rotation * Math.PI) / 180);
+          ctx.scale(modalState.scale, modalState.scale);
+          ctx.drawImage(modalImg, -modalImg.width / 2, -modalImg.height / 2);
+          ctx.restore();
+          // Mask
+          ctx.save();
+          ctx.globalCompositeOperation = 'destination-in';
+          ctx.beginPath();
+          ctx.arc(128, 128, 112, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        profilePicInput.addEventListener('change', function (e) {
+          try {
+            // Prevent changes if not in edit mode
+            if (!isEditMode) {
+              e.preventDefault();
+              profilePicInput.value = '';
+              return;
+            }
+            
+            ensureModalExists();
+            const file = e.target.files && e.target.files[0];
+            uploadError.classList.add('hidden');
+            if (!file) return;
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+              uploadError.textContent = 'Invalid file type. Only jpeg/jpg/png allowed.';
+              uploadError.classList.remove('hidden');
+              profilePicInput.value = '';
+              return;
+            }
+            if (file.size > 2 * 1024 * 1024) {
+              uploadError.textContent = 'File too large. Max 2MB allowed.';
+              uploadError.classList.remove('hidden');
+              profilePicInput.value = '';
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+              try {
+                modalImg = new Image();
+                modalImg.src = ev.target.result;
+                modalImg.onload = function () {
+                  // check dimensions
+                  if (modalImg.width < MIN_IMAGE_DIM || modalImg.height < MIN_IMAGE_DIM) {
+                    uploadError.textContent = `Image dimensions too small. Minimum ${MIN_IMAGE_DIM}x${MIN_IMAGE_DIM}px required.`;
+                    uploadError.classList.remove('hidden');
+                    profilePicInput.value = '';
+                    return;
+                  }
+                  modalState = { scale: Math.min(2, Math.max(0.6, 256 / Math.max(modalImg.width, modalImg.height))), rotation: 0, tx: 0, ty: 0, dragging: false, sx: 0, sy: 0 };
+                  attachModalListeners();
+                  // now show modal
+                  if (cropModal) cropModal.classList.remove('hidden');
+                  renderModal();
+                };
+                modalImg.onerror = function () {
+                  uploadError.textContent = 'Unable to load image file.';
+                  uploadError.classList.remove('hidden');
+                };
+              } catch (err) {
+                console.error('Error loading image for modal:', err);
+                uploadError.textContent = 'Unable to load image for cropping.';
+                uploadError.classList.remove('hidden');
+              }
+            };
+            reader.readAsDataURL(file);
+          } catch (err) {
+            console.error('Error on file change:', err);
+            uploadError.textContent = 'An unexpected error occurred.';
+            uploadError.classList.remove('hidden');
+          }
+        });
+
+        // Modal controls (attach only if elements exist)
+        function addModalControlListeners() {
+          if (cropZoomIn) cropZoomIn.addEventListener('click', () => { modalState.scale = Math.min(3, modalState.scale + 0.1); renderModal(); });
+          if (cropZoomOut) cropZoomOut.addEventListener('click', () => { modalState.scale = Math.max(0.5, modalState.scale - 0.1); renderModal(); });
+          if (cropRotateLeft) cropRotateLeft.addEventListener('click', () => { modalState.rotation = (modalState.rotation - 90) % 360; renderModal(); });
+          if (cropRotateRight) cropRotateRight.addEventListener('click', () => { modalState.rotation = (modalState.rotation + 90) % 360; renderModal(); });
+          if (cropCancel) cropCancel.addEventListener('click', () => { if (cropModal) cropModal.classList.add('hidden'); modalImg = null; profilePicInput.value = ''; });
+          if (cropApply) cropApply.addEventListener('click', () => {
+            try {
+              const final = document.createElement('canvas'); final.width = 112; final.height = 112; const ctx = final.getContext('2d');
+              ctx.save(); ctx.beginPath(); ctx.arc(56,56,56,0,2*Math.PI); ctx.clip();
+              ctx.drawImage(cropModalCanvas, 0,0,256,256,0,0,112,112);
+              ctx.restore();
+              final.toBlob((blob) => {
+                croppedBlob = blob;
+                profilePic.src = URL.createObjectURL(blob);
+                profilePic.classList.remove('hidden');
+                if (cropModal) cropModal.classList.add('hidden');
+                modalImg = null;
+              }, 'image/png');
+            } catch (err) {
+              console.error('Error applying crop:', err);
+              uploadError.textContent = 'Failed to apply crop.';
+              uploadError.classList.remove('hidden');
+            }
+          });
+        }
+
+        // attach modal control listeners now (if present)
+        addModalControlListeners();
+
+        // global error listener to capture runtime issues and show in console/debug badge
+        window.addEventListener('error', function (ev) {
+          console.error('[GLOBAL ERROR]', ev.error || ev.message, ev.error ? ev.error.stack : '');
+          try {
+            const dbg = document.getElementById('crop-debug-badge');
+            if (dbg) dbg.innerText = 'Crop debug: ERROR (see console)';
+          } catch (e) {}
+        });
+
+        // Drag handling on modal canvas (attach only if canvas exists)
+        if (cropModalCanvas) {
+          cropModalCanvas.addEventListener('mousedown', (e) => { modalState.dragging = true; modalState.sx = e.clientX; modalState.sy = e.clientY; });
+          window.addEventListener('mousemove', (e) => { if (!modalState.dragging) return; modalState.tx += (e.clientX - modalState.sx); modalState.ty += (e.clientY - modalState.sy); modalState.sx = e.clientX; modalState.sy = e.clientY; renderModal(); });
+          window.addEventListener('mouseup', () => { modalState.dragging = false; });
+        }
+
+        // --- Debug self-check (runtime) ---
+        try {
+          console.log('[DEBUG] patientDashboard: running crop modal self-check');
+          console.log('[DEBUG] cropModal element present:', !!cropModal, cropModal ? cropModal.className : null);
+          console.log('[DEBUG] cropModalCanvas element present:', !!cropModalCanvas);
+          console.log('[DEBUG] profilePicInput element present:', !!profilePicInput);
+          // mark that we've added a listener (for quick inspection in console)
+          if (profilePicInput) profilePicInput.__hasChangeListener = true;
+
+          // add a small on-page badge to make it easy to test the file picker
+          const existingBadge = document.getElementById('crop-debug-badge');
+          if (!existingBadge) {
+            const badge = document.createElement('div');
+            badge.id = 'crop-debug-badge';
+            badge.style.position = 'fixed';
+            badge.style.left = '8px';
+            badge.style.bottom = '8px';
+            badge.style.zIndex = 99999;
+            badge.style.padding = '8px 10px';
+            badge.style.background = 'rgba(0,0,0,0.7)';
+            badge.style.color = 'white';
+            badge.style.fontSize = '12px';
+            badge.style.borderRadius = '6px';
+            badge.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+            badge.innerText = 'Crop debug: modal ' + (cropModal ? 'OK' : 'MISSING') + ' | input ' + (profilePicInput ? 'OK' : 'MISSING');
+
+            const testBtn = document.createElement('button');
+            testBtn.style.marginLeft = '8px';
+            testBtn.style.padding = '4px 6px';
+            testBtn.style.fontSize = '11px';
+            testBtn.style.border = 'none';
+            testBtn.style.borderRadius = '4px';
+            testBtn.style.cursor = 'pointer';
+            testBtn.innerText = 'Test Open File';
+            testBtn.onclick = function () {
+              if (profilePicInput) {
+                try { profilePicInput.click(); } catch (err) { alert('Unable to open file input: ' + err.message); }
+              } else {
+                alert('profilePicInput not found on the page');
+              }
+            };
+
+            badge.appendChild(testBtn);
+            document.body.appendChild(badge);
+          }
+        } catch (dbgErr) {
+          console.error('[DEBUG] self-check failed:', dbgErr);
+        }
+
+        editBtn.addEventListener("click", () => toggleEditMode(true));
         cancelBtn.addEventListener("click", () => {
           editFields.forEach((field) => {
             field.value = originalValues[field.name] || "";
           });
+          cropperCanvas.classList.add("hidden");
+          profilePic.classList.remove("hidden");
           toggleEditMode(false);
         });
 
         saveBtn.addEventListener("click", async (e) => {
           e.preventDefault();
           const formData = new FormData(form);
-          if (profilePicInput.files[0]) {
-            formData.append("profilePic", profilePicInput.files[0]);
+          if (croppedBlob) {
+            formData.set("profilePic", croppedBlob, profilePicInput.files[0].name);
+          } else if (profilePicInput.files[0]) {
+            formData.set("profilePic", profilePicInput.files[0]);
           }
-
+          uploadProgress.classList.remove("hidden");
+          progressBar.style.width = "0%";
           saveBtn.disabled = true;
           saveBtn.innerHTML =
             '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Saving...';
           lucide.createIcons();
-
           try {
-            const response = await fetch("/patient/update", {
-              method: "PUT",
-              body: formData,
-            });
-            const result = await response.json();
-
-            if (response.ok) {
-              showMessage(result.message, "success");
-              setTimeout(() => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("PUT", "/patient/update");
+            xhr.upload.onprogress = function (event) {
+              if (event.lengthComputable) {
+                const percent = (event.loaded / event.total) * 100;
+                progressBar.style.width = percent + "%";
+              }
+            };
+            
+            xhr.onerror = function() {
+              uploadProgress.classList.add("hidden");
+              saveBtn.disabled = false;
+              saveBtn.innerHTML = '<i data-lucide="save" class="w-4 h-4 mr-2"></i> Save Changes';
+              messageDiv.classList.remove("hidden", "bg-green-100", "text-green-800");
+              messageDiv.classList.add("bg-red-100", "text-red-800");
+              messageIcon.innerHTML = '<i data-lucide="x-circle"></i>';
+              messageText.textContent = "Failed to save changes. Please try again.";
+              lucide.createIcons();
+            };
+            xhr.onload = function () {
+              uploadProgress.classList.add("hidden");
+              if (xhr.status === 200) {
+                // Exit edit mode on successful save
+                toggleEditMode(false);
+                // Reset the save button state
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i data-lucide="save" class="w-4 h-4 mr-2"></i> Save Changes';
+                showMessage("Profile updated successfully", "success");
+                // Reload immediately to update summary photo
                 window.location.reload();
-              }, 2000);
-            } else {
-              showMessage(
-                result.message || "Failed to update profile",
-                "error"
-              );
-            }
+              } else {
+                showMessage("Failed to update profile", "error");
+              }
+            };
+            xhr.onerror = function () {
+              uploadProgress.classList.add("hidden");
+              saveBtn.disabled = false;
+              saveBtn.innerHTML =
+                '<i data-lucide="save" class="w-4 h-4 mr-2"></i> Save Changes';
+              lucide.createIcons();
+              showMessage("An error occurred while updating your profile", "error");
+            };
+            xhr.send(formData);
           } catch (error) {
-            console.error("Update error:", error);
-            showMessage(
-              "An error occurred while updating your profile",
-              "error"
-            );
-          } finally {
+            uploadProgress.classList.add("hidden");
             saveBtn.disabled = false;
             saveBtn.innerHTML =
               '<i data-lucide="save" class="w-4 h-4 mr-2"></i> Save Changes';
             lucide.createIcons();
+            showMessage("An error occurred while updating your profile", "error");
           }
         });
       });
