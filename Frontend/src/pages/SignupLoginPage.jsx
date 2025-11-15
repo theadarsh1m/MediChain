@@ -3,63 +3,124 @@ import SignupForm from "../components/SignupForm";
 import LoginForm from "../components/LoginForm";
 import BackgroundDNA from "../components/BackgroundDNA";
 import Navbar from "../components/Navbar";
+import { useTheme } from "../context/ThemeContext";
 
-/**
- * SignupLoginPage.jsx
- * - Uses BackgroundDNA for extreme DNA lab animation
- * - Modal card sits on top (z-10)
- */
 export default function SignupLoginPage() {
   const [mode, setMode] = useState("signup");
-  const [open, setOpen] = useState(true);
-
-  if (!open) return null;
+  const { isDark } = useTheme();
 
   return (
-    <div className="fixed inset-0 z-50">
-    <Navbar />
+    // Change 1: Allow scrolling. We use min-h-screen instead of fixed inset-0 for the container content
+    <div className={`relative min-h-screen w-full transition-colors duration-300 ${isDark ? 'dark bg-slate-950 text-white' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50 text-black'}`}>
+      
+      <Navbar />
 
-      {/* Animated background */}
-      <BackgroundDNA />
+      {/* Background stays fixed so it doesn't scroll with the form */}
+      <div className="fixed inset-0 z-0">
+        {isDark && <BackgroundDNA />}
+        {/* Overlay */}
+        <div className={`absolute inset-0 transition-colors duration-300 ${isDark ? 'bg-black/60 backdrop-blur-[2px]' : 'bg-gradient-to-br from-blue-100/20 to-purple-100/20 backdrop-blur-[1px]'}`} />
+      </div>
 
-      {/* subtle dim overlay to increase contrast on modal */}
-      <div className="absolute inset-0 bg-black/55 z-0" />
-
-      {/* modal container */}
-      <div className="relative w-full max-w-lg mx-auto z-10">
-        <div className="relative bg-gradient-to-b from-neutral-900/80 to-neutral-900/70 backdrop-blur-2xl border border-white/10 p-7 rounded-2xl shadow-2xl">
-          {/* Header row: tabs + optional vector logo */}
-          <div className="flex items-center justify-between mb-6">
+      {/* Modal Container - Centered but allows scrolling if height is too big */}
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-4 py-20">
+        
+        {/* The Card */}
+        <div className={`w-full max-w-lg relative backdrop-blur-xl border p-8 rounded-3xl transition-colors duration-300 ${
+          isDark 
+            ? 'bg-neutral-900/80 border-white/10 shadow-2xl' 
+            : 'bg-white border-blue-200/50 shadow-2xl drop-shadow-xl'
+        }`}>
+          
+          {/* Header row */}
+          <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="rounded-full px-3 py-1 bg-white text-black font-medium">MediChain</div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setMode("signup")}
-                className={`px-4 py-2 rounded-full text-sm transition ${mode === "signup" ? "bg-white text-black font-medium" : "bg-transparent text-white/70"}`}
-              >
-                Sign up
-              </button>
-              <button
-                onClick={() => setMode("signin")}
-                className={`px-4 py-2 rounded-full text-sm transition ${mode === "signin" ? "bg-white text-black font-medium" : "bg-transparent text-white/70"}`}
-              >
-                Sign in
-              </button>
-              <button onClick={() => setOpen(false)} className="text-white/60 ml-2">✕</button>
+            <div className="flex items-center gap-2">
+              {/* Toggle Buttons */}
+              <div className={`rounded-full p-1 flex border transition-colors duration-300 ${
+                isDark 
+                  ? 'bg-black/40 border-white/5' 
+                  : 'bg-gray-200/60 border-blue-300/30'
+              }`}>
+                <button
+                  onClick={() => setMode("signup")}
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                    mode === "signup" 
+                      ? isDark
+                        ? "bg-white text-black shadow-lg"
+                        : "bg-blue-600 text-white shadow-lg"
+                      : isDark
+                      ? "text-neutral-400 hover:text-white"
+                      : "text-gray-700 hover:text-gray-900"
+                  }`}
+                >
+                  Sign up
+                </button>
+                <button
+                  onClick={() => setMode("signin")}
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                    mode === "signin" 
+                      ? isDark
+                        ? "bg-white text-black shadow-lg"
+                        : "bg-blue-600 text-white shadow-lg"
+                      : isDark
+                      ? "text-neutral-400 hover:text-white"
+                      : "text-gray-700 hover:text-gray-900"
+                  }`}
+                >
+                  Sign in
+                </button>
+              </div>
             </div>
           </div>
 
-          <h1 className="text-3xl font-extrabold text-white mb-6">
+          {/* Dynamic Title */}
+          <h1 className={`text-3xl font-bold mb-2 transition-colors duration-300 ${
+            isDark ? 'text-white' : 'text-black'
+          }`}>
             {mode === "signup" ? "Create an account" : "Welcome back"}
           </h1>
+          <p className={`text-sm mb-6 transition-colors duration-300 ${
+            isDark ? 'text-neutral-400' : 'text-gray-700'
+          }`}>
+             {mode === "signup" ? "Enter your details to get started." : "Please enter your details to sign in."}
+          </p>
 
-          {mode === "signup" ? <SignupForm /> : <LoginForm />}
-        </div>
+          {/* Render Form */}
+          <div className={`transition-all duration-500 overflow-hidden ${
+            mode === "signup" 
+              ? 'slide-in-left' 
+              : 'slide-in-right'
+          }`}>
+             {mode === "signup" ? <SignupForm /> : <LoginForm />}
+          </div>
 
-        <div className="mt-4 text-center text-neutral-400 text-sm">
-          {mode === "signup" ? "By creating an account, you agree to our Terms & Service" : "Don't have an account? Switch to Sign up"}
+          {/* Footer Toggle Text */}
+          <div className={`mt-6 text-center text-sm transition-colors duration-300 ${
+            isDark ? 'text-neutral-500' : 'text-gray-700'
+          }`}>
+            {mode === "signup" ? (
+              <>
+                Already have an account?{" "}
+                <button onClick={() => setMode("signin")} className={`font-semibold hover:underline ${
+                  isDark ? 'text-blue-400' : 'text-blue-600'
+                }`}>
+                  Sign in
+                </button>
+              </>
+            ) : (
+              <>
+                Don't have an account?{" "}
+                <button onClick={() => setMode("signup")} className={`font-semibold hover:underline ${
+                  isDark ? 'text-blue-400' : 'text-blue-600'
+                }`}>
+                  Sign up
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

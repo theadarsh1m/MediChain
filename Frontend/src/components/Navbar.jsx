@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, ShieldCheck } from "lucide-react";
 import { Classic } from "@theme-toggles/react";
 import "@theme-toggles/react/css/Classic.css";
 import { LiquidButton } from "@/components/ui/shadcn-io/liquid-button";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function Navbar({ locoScrollRef }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDark, setIsDark] = useState(() => {
-    const savedTheme = localStorage.getItem("theme");
-    return savedTheme === "dark";
-  });
+  const { isDark, toggleTheme } = useTheme();
 
   const navLinks = [
     { name: "Features", target: "#features" },
@@ -25,18 +23,8 @@ export default function Navbar({ locoScrollRef }) {
     }
   };
 
-  useEffect(() => {
-    if (isDark) {
-      document.body.setAttribute("data-theme", "dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.body.setAttribute("data-theme", "light");
-      localStorage.setItem("theme", "light");
-    }
-  }, [isDark]);
-
   function handleTheme() {
-    setIsDark((prev) => !prev);
+    toggleTheme();
   }
 
   return (

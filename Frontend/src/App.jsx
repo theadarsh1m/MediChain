@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
+import { ThemeProvider } from "./context/ThemeContext";
 
 import Home from "./pages/Home";
 import Signup from "./pages/SignupLoginPage";
@@ -14,11 +15,13 @@ export default function App() {
   }, []);
   
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/signup" element={<Signup />} />
-      </Routes>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/signup" element={<Signup />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }

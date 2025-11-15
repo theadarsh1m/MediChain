@@ -18,7 +18,7 @@
     "locomotive-scroll": "^4.1.4",
     "lucide-react": "^0.553.0",
     "motion": "^12.23.24",
-    "react": "^19.1.1",
+    "react": "^19.2.0",
     "react-dom": "^19.1.1",
     "react-parallax-tilt": "^1.7.313",
     "react-router-dom": "^7.9.5",

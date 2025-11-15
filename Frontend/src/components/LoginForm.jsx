@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { Chrome } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 export default function LoginForm() {
   const API_URL = import.meta.env.VITE_Backend_API_URL;
+  const { isDark } = useTheme();
 
   const [data, setData] = useState({
     email: "",
@@ -29,7 +32,11 @@ export default function LoginForm() {
         name="email"
         onChange={handle}
         placeholder="Enter your email"
-        className="w-full px-4 py-3 rounded-lg bg-black/30 border border-white/10 text-white"
+        className={`w-full px-4 py-3 rounded-lg border transition ${
+          isDark
+            ? 'bg-black/30 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+            : 'bg-white/60 border-blue-200/50 text-black placeholder-gray-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+        }`}
         required
       />
 
@@ -38,37 +45,41 @@ export default function LoginForm() {
         name="password"
         onChange={handle}
         placeholder="Password"
-        className="w-full px-4 py-3 rounded-lg bg-black/30 border border-white/10 text-white"
+        className={`w-full px-4 py-3 rounded-lg border transition ${
+          isDark
+            ? 'bg-black/30 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+            : 'bg-white/60 border-blue-200/50 text-black placeholder-gray-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+        }`}
         required
       />
 
-      <button className="w-full py-3 bg-white text-black rounded-lg font-medium">
+      <button className={`w-full py-3 rounded-lg font-medium transition-colors ${
+        isDark
+          ? 'bg-white text-black hover:bg-neutral-200'
+          : 'bg-blue-600 text-white hover:bg-blue-700'
+      }`}>
         Sign in
       </button>
 
-      <div className="flex items-center gap-4 my-4 text-neutral-400">
-        <div className="flex-1 h-px bg-white/10" />
-        OR SIGN IN WITH
-        <div className="flex-1 h-px bg-white/10" />
+      <div className={`flex items-center gap-4 my-4 text-sm uppercase font-semibold ${
+        isDark ? 'text-neutral-400' : 'text-gray-600'
+      }`}>
+        <div className={`flex-1 h-px ${isDark ? 'bg-white/10' : 'bg-blue-200/30'}`} />
+        OR CONTINUE WITH
+        <div className={`flex-1 h-px ${isDark ? 'bg-white/10' : 'bg-blue-200/30'}`} />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <button
-          type="button"
-          className="py-3 rounded-lg bg-black/40 border border-white/10 text-white flex items-center justify-center gap-2"
-        >
-          <img src="/google-icon.png" className="h-5" />
-          Google
-        </button>
-
-        <button
-          type="button"
-          className="py-3 rounded-lg bg-black/40 border border-white/10 text-white flex items-center justify-center gap-2"
-        >
-          <img src="/apple-icon.png" className="h-5" />
-          Apple
-        </button>
-      </div>
+      <button
+        type="button"
+        className={`w-full py-3 rounded-lg border transition flex items-center justify-center gap-2 font-medium ${
+          isDark
+            ? 'bg-black/40 border-white/10 text-white hover:bg-white/5'
+            : 'bg-white/50 border-blue-200/30 text-black hover:bg-blue-50'
+        }`}
+      >
+        <Chrome size={18} />
+        Google
+      </button>
     </form>
   );
 }
