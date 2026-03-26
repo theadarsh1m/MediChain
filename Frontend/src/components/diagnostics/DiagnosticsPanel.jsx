@@ -1,7 +1,7 @@
 import { FileHeart, FileText, Pill, ShieldAlert } from "lucide-react";
 
 import Badge from "../ui/Badge";
-import MetricCard from "../dashboard/MetricCard";
+import MetricCard from "../ui/MetricCard";
 import Section from "../ui/Section";
 import { formatField, normalizeList } from "../../lib/patient";
 

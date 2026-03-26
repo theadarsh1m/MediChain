@@ -1,7 +1,7 @@
 import { useOutletContext } from "react-router-dom";
-import DashboardOverview from "../../components/dashboard/DashboardOverview";
+import PatientDashboardContainer from "../../components/dashboard/container/PatientDashboardContainer";
 
 export default function DashboardPage() {
   const { patient } = useOutletContext();
-  return <DashboardOverview patient={patient} />;
+  return <PatientDashboardContainer patient={patient} />;
 }
