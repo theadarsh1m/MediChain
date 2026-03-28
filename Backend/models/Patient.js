@@ -64,6 +64,10 @@ const patientSchema = new mongoose.Schema(
       immunizationReminders: [String],
     },
 
+    aiSummary: {
+      type: String, // Cache for generated AI summary
+    },
+
     admin: {
       doctorNotes: String,
       prescriptions: [String],

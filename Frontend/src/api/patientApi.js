@@ -14,3 +14,8 @@ export async function updatePatientProfileRequest(payload) {
 
   return response.data?.patient ?? null;
 }
+
+export async function generateAISummaryRequest(forceUpdate = false) {
+  const response = await api.post("/patient/action/generate-summary", { forceUpdate });
+  return response.data; // { summary: "...", patient: {...} }
+}
