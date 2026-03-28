@@ -12,7 +12,7 @@ const {
   addMedication,
   bookVisit,
 } = require("../controllers/patientActionsController");
-const { generateAISummary } = require("../controllers/aiController");
+const { generateAISummary, generateSmartAlerts } = require("../controllers/aiController");
 const upload = require("../middleware/uploadMiddleware");
 
 router.get("/profile", authMiddleware, getPatientProfile);
@@ -26,6 +26,7 @@ router.post("/action/upload", authMiddleware, upload.single("file"), uploadDocum
 router.post("/action/medication", authMiddleware, addMedication);
 router.post("/action/book", authMiddleware, bookVisit);
 router.post("/action/generate-summary", authMiddleware, generateAISummary);
+router.post("/action/generate-alerts", authMiddleware, generateSmartAlerts);
 
 // Multer error handler for this router
 router.use((err, req, res, next) => {

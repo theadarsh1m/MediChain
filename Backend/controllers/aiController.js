@@ -51,6 +51,12 @@ async function generateAISummary(req, res) {
       }
       - Exercise Routine: ${currentHealth.exerciseRoutine || "Not provided"}
       - Mental Health Status: ${currentHealth.mentalHealthStatus || "Not provided"}
+
+      Diagnostics:
+      - Lab Reports Count: ${diagnostics.labReports?.length || 0}
+      - Liver Function: ${diagnostics.organFunction?.liver || "Not provided"}
+      - Kidney Function: ${diagnostics.organFunction?.kidney || "Not provided"}
+      - Other Diagnostics: ${diagnostics.organFunction?.others || "Not provided"}
     `;
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -76,6 +82,73 @@ async function generateAISummary(req, res) {
   }
 }
 
+async function generateSmartAlerts(req, res) {
+  try {
+    if (req.user.role !== "patient") {
+      return res.status(403).json({ message: "Access denied. Patients only." });
+    }
+
+    const patient = await Patient.findById(req.user.id);
+    if (!patient) {
+      return res.status(404).json({ message: "Patient not found." });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ message: "GEMINI_API_KEY is not configured on the server." });
+    }
+
+    const contextData = {
+      age: patient.dob ? new Date().getFullYear() - new Date(patient.dob).getFullYear() : 'Unknown',
+      gender: patient.gender || 'Unknown',
+      bloodGroup: patient.bloodGroup || 'Unknown',
+      activePrescriptions: patient.admin?.prescriptions || [],
+      recentLabs: patient.diagnostics?.labReports?.length || 0,
+      upcomingAppointments: patient.admin?.nextAppointment ? 1 : 0
+    };
+
+    const promptText = `You are an intelligent, empathetic medical assistant for a patient portal.
+Analyze the following patient context and generate exactly 3 personalized, concise health alerts or recommendations.
+Keep each message under 2 sentences.
+Do not hallucinate severe conditions. Keep it supportive and preventive based on their data (like upcoming appointments, current prescriptions, age, etc). If there is little data, provide general preventive health nudges.
+
+Respond ONLY with a valid JSON array of objects. Do not include markdown code blocks (\`\`\`json). The format must be exactly:
+[
+  {
+    "type": "info" | "warning" | "success",
+    "message": "The personalized alert text here."
+  }
+]
+
+Patient Context:
+${JSON.stringify(contextData)}`;
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: promptText,
+    });
+
+    const textContent = response.text;
+
+    // Sanitize string if it has markdown ticks
+    let cleanJson = textContent.trim();
+    if (cleanJson.startsWith('```json')) {
+      cleanJson = cleanJson.substring(7);
+      if (cleanJson.endsWith('```')) {
+        cleanJson = cleanJson.substring(0, cleanJson.length - 3);
+      }
+    }
+
+    const alerts = JSON.parse(cleanJson);
+    return res.status(200).json({ alerts });
+
+  } catch (error) {
+    console.error("AI Alerts generation error:", error);
+    return res.status(500).json({ message: "Failed to generate AI alerts.", error: error.message });
+  }
+}
+
 module.exports = {
   generateAISummary,
+  generateSmartAlerts,
 };
