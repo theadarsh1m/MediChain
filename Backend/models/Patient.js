@@ -67,6 +67,12 @@ const patientSchema = new mongoose.Schema(
     aiSummary: {
       type: String, // Cache for generated AI summary
     },
+    aiAlerts: [
+      {
+        type: { type: String, enum: ["info", "warning", "success"] },
+        message: String,
+      }
+    ],
 
     admin: {
       doctorNotes: String,

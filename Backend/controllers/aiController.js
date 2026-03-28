@@ -88,9 +88,15 @@ async function generateSmartAlerts(req, res) {
       return res.status(403).json({ message: "Access denied. Patients only." });
     }
 
+    const { forceUpdate } = req.body;
+
     const patient = await Patient.findById(req.user.id);
     if (!patient) {
       return res.status(404).json({ message: "Patient not found." });
+    }
+
+    if (patient.aiAlerts && patient.aiAlerts.length > 0 && !forceUpdate) {
+      return res.status(200).json({ alerts: patient.aiAlerts });
     }
 
     if (!process.env.GEMINI_API_KEY) {
@@ -140,6 +146,11 @@ ${JSON.stringify(contextData)}`;
     }
 
     const alerts = JSON.parse(cleanJson);
+
+    // Cache alerts
+    patient.aiAlerts = alerts;
+    await patient.save();
+
     return res.status(200).json({ alerts });
 
   } catch (error) {
