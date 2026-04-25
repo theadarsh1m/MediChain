@@ -50,6 +50,10 @@ app.use((req, res) => {
   res.status(404).json({ message: "Page Not Found" });
 });
 
-app.listen(PORT, () => {
-  console.log(`server running on ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
