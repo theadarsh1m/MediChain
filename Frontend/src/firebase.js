@@ -3,15 +3,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain:
-    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "retailgeniusai.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "retailgeniusai",
-  storageBucket:
-    import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "retailgeniusai.firebasestorage.app",
-  messagingSenderId:
-    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "119502277011",
-  appId:
-    import.meta.env.VITE_FIREBASE_APP_ID || "1:119502277011:web:cd31539a0a02d79f434066",
+  authDomain: "projects1m.firebaseapp.com",
+  projectId: "projects1m",
+  storageBucket: "projects1m.firebasestorage.app",
+  messagingSenderId: "476755376237",
+  appId: "1:476755376237:web:7c04d4d112805db128e764",
+  measurementId: "G-G387XW8X51",
 };
 
 const app = initializeApp(firebaseConfig);
