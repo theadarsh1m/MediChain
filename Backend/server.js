@@ -11,16 +11,31 @@ const doctorUploadRoute = require("./routes/doctorUploadRoute");
 
 const app = express();
 
+// CORS: support multiple origins (local dev + production)
+const allowedOrigins = [
+  process.env.Frontend_URL,
+  "https://medichain.theadarsh.me",
+  "https://medichainreal.netlify.app",
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.Frontend_URL,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl, health checks)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
 
 const PORT = process.env.PORT || 5001;
 
-connectToMongoDB(process.env.MONGO_URI);
+// Connect to MongoDB (cached for serverless warm starts)
+const dbReady = connectToMongoDB(process.env.MONGO_URI);
 
 app.use(cookieParser());
 app.use(express.json());
@@ -50,10 +65,18 @@ app.use((req, res) => {
   res.status(404).json({ message: "Page Not Found" });
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+// Only listen locally — Vercel handles HTTP in production
+if (process.env.NODE_ENV !== "production") {
+  dbReady
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error("Failed to start server:", err.message);
+      process.exit(1);
+    });
 }
 
 module.exports = app;
