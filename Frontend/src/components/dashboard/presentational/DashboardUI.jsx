@@ -3,6 +3,7 @@ import MetricsGrid from "./MetricsGrid";
 import HealthTimeline from "./HealthTimeline";
 import AlertsPanel from "./AlertsPanel";
 import QuickActions from "./QuickActions";
+import AISummaryCard from "./AISummaryCard";
 
 export default function DashboardUI({ 
   patientData, 
@@ -44,6 +45,8 @@ export default function DashboardUI({
           unreadNotes={docsCount}
         />
       </div>
+
+      <AISummaryCard patientData={patientData} />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
         <div className="space-y-6">
