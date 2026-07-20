@@ -4,19 +4,14 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { useTheme } from "../context/ThemeContext";
-import { selectAuthError, selectAuthLoading } from "../features/auth/authSelectors";
-import { signupWithCredentials } from "../features/auth/authThunks";
-import { setCredentials } from "../features/auth/authSlice";
-import { useAppDispatch, useAppSelector } from "../hooks/reduxHooks";
+import { useAuth } from "../hooks/useAuth";
 import GoogleLoginButton from "./auth/GoogleLoginButton";
 import RoleSelector from "./RoleSelector";
 
 export default function SignupForm() {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const loading = useAppSelector(selectAuthLoading);
-  const error = useAppSelector(selectAuthError);
+  const { loading, error, signup } = useAuth();
   const [role, setRole] = useState("patient");
   const [data, setData] = useState({
     firstName: "",
@@ -55,17 +50,8 @@ export default function SignupForm() {
     };
 
     try {
-      const response = await dispatch(signupWithCredentials(payload)).unwrap();
+      const response = await signup(payload);
       
-      // Store token in localStorage
-      localStorage.setItem("token", response.token);
-      
-      // Dispatch Redux setCredentials
-      dispatch(setCredentials({
-        user: response.user,
-        token: response.token,
-      }));
-
       navigate(response.redirectTo || "/patient");
       toast.success("Account created successfully.");
     } catch (message) {

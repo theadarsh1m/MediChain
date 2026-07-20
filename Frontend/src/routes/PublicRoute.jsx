@@ -1,12 +1,16 @@
 import { Navigate, Outlet } from "react-router-dom";
-
-import { selectIsAuthenticated } from "../features/auth/authSelectors";
-import { useAppSelector } from "../hooks/reduxHooks";
+import { useAuth } from "../hooks/useAuth";
 
 export default function PublicRoute() {
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const { isAuthenticated, user } = useAuth();
 
   if (isAuthenticated) {
+    if (user?.role === "doctor") {
+      return <Navigate to="/doctor" replace />;
+    }
+    if (user?.role === "hospital") {
+      return <Navigate to="/hospital" replace />;
+    }
     return <Navigate to="/patient" replace />;
   }
 

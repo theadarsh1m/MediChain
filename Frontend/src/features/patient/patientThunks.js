@@ -3,7 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   fetchPatientProfileRequest,
   updatePatientProfileRequest,
-} from "../../api/patientApi";
+} from "../../api/patient";
 import { logout, setCredentials } from "../auth/authSlice";
 
 function getErrorMessage(error, fallbackMessage) {

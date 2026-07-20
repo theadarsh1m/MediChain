@@ -6,6 +6,7 @@ import Navbar from "../components/Navbar";
 import { useTheme } from "../context/ThemeContext";
 import Typewriter from "typewriter-effect";
 import { Toaster } from "react-hot-toast";
+import { GLASS_CARD_STYLES } from "../constants/styles";
 
 const mediChainLogo = "/medichain%20Icon.png";
 const signupTexts = [
@@ -64,11 +65,7 @@ export default function SignupLoginPage() {
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4 py-20">
         {/* Card */}
         <div
-          className={`w-full max-w-lg relative backdrop-blur-xl border p-8 rounded-3xl transition-colors duration-300 ${
-            isDark
-              ? "bg-neutral-900/80 border-white/10 shadow-2xl"
-              : "bg-white border-blue-200/50 shadow-2xl drop-shadow-xl"
-          }`}
+          className={GLASS_CARD_STYLES}
         >
           <div className="flex items-center justify-between mb-8">
             <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">

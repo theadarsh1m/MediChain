@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Activity,
   FileHeart,
@@ -19,10 +19,7 @@ import "@theme-toggles/react/css/Classic.css";
 import Button from "../components/ui/Button";
 import Loader from "../components/ui/Loader";
 import { useTheme } from "../context/ThemeContext";
-import { auth } from "../firebase";
-import { signOut } from "firebase/auth";
-import { logout } from "../features/auth/authSlice";
-import { selectCurrentUser, selectIsAuthenticated } from "../features/auth/authSelectors";
+import { useAuth } from "../hooks/useAuth";
 import {
   selectPatientData,
   selectPatientError,
@@ -105,11 +102,9 @@ function SidebarLogout({ onLogout }) {
 export default function PatientLayout() {
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
-  const authUser = useAppSelector(selectCurrentUser);
+  const { isAuthenticated, user: authUser, logout: handleLogout } = useAuth();
   const patientProfile = useAppSelector(selectPatientData);
   const loading = useAppSelector(selectPatientLoading);
   const error = useAppSelector(selectPatientError);
@@ -118,12 +113,6 @@ export default function PatientLayout() {
   const patient = patientProfile ?? getPatientFallback(authUser);
   const currentItem =
     navItems.find((item) => location.pathname.includes(item.to)) || navItems[0];
-
-  const handleLogout = async () => {
-    await signOut(auth).catch(() => {});
-    dispatch(logout());
-    navigate("/login", { replace: true });
-  };
 
   useEffect(() => {
     if (isAuthenticated && !patientProfile && !loading) {

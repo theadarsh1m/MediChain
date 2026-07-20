@@ -4,7 +4,7 @@ import {
   loginWithCredentials as loginWithCredentialsRequest,
   loginWithGoogle as loginWithGoogleRequest,
   signupWithCredentials as signupWithCredentialsRequest,
-} from "../../api/authApi";
+} from "../../api/auth";
 import { clearAuthSession, decorateUserWithTokenClaims, getStoredSession } from "./authStorage";
 
 function getErrorMessage(error, fallbackMessage) {

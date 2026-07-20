@@ -16,6 +16,9 @@ import ProfilePage from "./pages/patient/ProfilePage";
 import SettingsPage from "./pages/patient/SettingsPage";
 import PrivateRoute from "./routes/PrivateRoute";
 import PublicRoute from "./routes/PublicRoute";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import RoleProtectedRoute from "./routes/RoleProtectedRoute";
+import PortalPlaceholder from "./pages/PortalPlaceholder";
 
 function renderPatientRoutes() {
   return (
@@ -56,12 +59,20 @@ export default function App() {
             <Route path="/login" element={<Signup />} />
           </Route>
 
-          <Route element={<PrivateRoute />}>
-            <Route path="/patient" element={<PatientLayout />}>
-              {renderPatientRoutes()}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<RoleProtectedRoute allowedRoles={["patient"]} />}>
+              <Route path="/patient" element={<PatientLayout />}>
+                {renderPatientRoutes()}
+              </Route>
+              <Route path="/patient-portal" element={<PatientLayout />}>
+                {renderPatientRoutes()}
+              </Route>
             </Route>
-            <Route path="/patient-portal" element={<PatientLayout />}>
-              {renderPatientRoutes()}
+            <Route element={<RoleProtectedRoute allowedRoles={["doctor"]} />}>
+              <Route path="/doctor" element={<PortalPlaceholder title="Doctor Portal" />} />
+            </Route>
+            <Route element={<RoleProtectedRoute allowedRoles={["hospital"]} />}>
+              <Route path="/hospital" element={<PortalPlaceholder title="Hospital Portal" />} />
             </Route>
           </Route>
 

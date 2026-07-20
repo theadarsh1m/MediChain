@@ -3,17 +3,13 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { useTheme } from "../context/ThemeContext";
-import { selectAuthError, selectAuthLoading } from "../features/auth/authSelectors";
-import { loginWithCredentials } from "../features/auth/authThunks";
-import { useAppDispatch, useAppSelector } from "../hooks/reduxHooks";
+import { useAuth } from "../hooks/useAuth";
 import GoogleLoginButton from "./auth/GoogleLoginButton";
 
 export default function LoginForm() {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const loading = useAppSelector(selectAuthLoading);
-  const error = useAppSelector(selectAuthError);
+  const { loading, error, login } = useAuth();
   const [data, setData] = useState({
     email: "",
     password: "",
@@ -30,7 +26,7 @@ export default function LoginForm() {
     event.preventDefault();
 
     try {
-      const response = await dispatch(loginWithCredentials(data)).unwrap();
+      const response = await login(data);
       navigate(response.redirectTo || "/patient");
       toast.success("Login successful.");
     } catch (message) {
