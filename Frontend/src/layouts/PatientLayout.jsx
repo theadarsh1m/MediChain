@@ -11,6 +11,7 @@ import {
   Settings,
   UserCircle2,
   X,
+  Calendar,
 } from "lucide-react";
 import { Classic } from "@theme-toggles/react";
 
@@ -33,6 +34,7 @@ const mediChainLogo = "/medichain%20Icon.png";
 
 const navItems = [
   { to: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "appointments", label: "Appointments", icon: Calendar },
   { to: "profile", label: "Profile", icon: UserCircle2 },
   { to: "medical-history", label: "Medical History", icon: FileHeart },
   { to: "current-health", label: "Current Health", icon: HeartPulse },

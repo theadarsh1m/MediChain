@@ -9,7 +9,8 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const patientRoute = require("./routes/patientRoute");
 const doctorUploadRoute = require("./routes/doctorUploadRoute");
 const hospitalRoutes = require("./routes/hospitalRoutes");
-
+const appointmentRoutes = require("./routes/appointmentRoutes");
+const publicRoutes = require("./routes/publicRoutes");
 const app = express();
 
 // CORS: support multiple origins (local dev + production)
@@ -53,6 +54,8 @@ app.use("/dashboard", dashboardRoutes);
 app.use("/patient", patientRoute);
 app.use("/doctor", doctorUploadRoute);
 app.use("/hospital", hospitalRoutes);
+app.use("/api/appointments", appointmentRoutes);
+app.use("/api/public", publicRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to MediVault API" });

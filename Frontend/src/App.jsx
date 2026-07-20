@@ -14,6 +14,8 @@ import DiagnosticsPage from "./pages/patient/DiagnosticsPage";
 import MedicalHistoryPage from "./pages/patient/MedicalHistoryPage";
 import ProfilePage from "./pages/patient/ProfilePage";
 import SettingsPage from "./pages/patient/SettingsPage";
+import AppointmentBookingPage from "./pages/patient/AppointmentBookingPage";
+import AppointmentHistoryPage from "./pages/patient/AppointmentHistoryPage";
 import PrivateRoute from "./routes/PrivateRoute";
 import PublicRoute from "./routes/PublicRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -22,6 +24,10 @@ import PortalPlaceholder from "./pages/PortalPlaceholder";
 import HospitalLayout from "./layouts/HospitalLayout";
 import HospitalDashboardPage from "./pages/hospital/HospitalDashboardPage";
 import HospitalPlaceholderPage from "./pages/hospital/HospitalPlaceholderPage";
+import DoctorLayout from "./layouts/DoctorLayout";
+import AppointmentQueuePage from "./pages/doctor/AppointmentQueuePage";
+import AppointmentDetailsPage from "./pages/doctor/AppointmentDetailsPage";
+import AppointmentTablePage from "./pages/hospital/AppointmentTablePage";
 
 function renderPatientRoutes() {
   return (
@@ -35,6 +41,8 @@ function renderPatientRoutes() {
       <Route path="diagnostics" element={<DiagnosticsPage />} />
       <Route path="chat" element={<ChatPage />} />
       <Route path="settings" element={<SettingsPage />} />
+      <Route path="appointments" element={<AppointmentHistoryPage />} />
+      <Route path="appointments/book" element={<AppointmentBookingPage />} />
     </>
   );
 }
@@ -72,7 +80,14 @@ export default function App() {
               </Route>
             </Route>
             <Route element={<RoleProtectedRoute allowedRoles={["doctor"]} />}>
-              <Route path="/doctor" element={<PortalPlaceholder title="Doctor Portal" />} />
+              <Route path="/doctor" element={<DoctorLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<PortalPlaceholder title="Doctor Dashboard" />} />
+                <Route path="appointments" element={<AppointmentQueuePage />} />
+                <Route path="appointments/:id" element={<AppointmentDetailsPage />} />
+                <Route path="profile" element={<PortalPlaceholder title="Doctor Profile" />} />
+                <Route path="settings" element={<PortalPlaceholder title="Doctor Settings" />} />
+              </Route>
             </Route>
             <Route element={<RoleProtectedRoute allowedRoles={["hospital"]} />}>
               <Route path="/hospital" element={<HospitalLayout />}>
@@ -80,7 +95,7 @@ export default function App() {
                 <Route path="dashboard" element={<HospitalDashboardPage />} />
                 <Route path="doctors" element={<HospitalPlaceholderPage title="Doctors Management" />} />
                 <Route path="patients" element={<HospitalPlaceholderPage title="Patients Management" />} />
-                <Route path="appointments" element={<HospitalPlaceholderPage title="Appointments" />} />
+                <Route path="appointments" element={<AppointmentTablePage />} />
                 <Route path="departments" element={<HospitalPlaceholderPage title="Departments" />} />
                 <Route path="reports" element={<HospitalPlaceholderPage title="Reports" />} />
                 <Route path="settings" element={<HospitalPlaceholderPage title="Settings" />} />
