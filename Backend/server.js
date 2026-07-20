@@ -8,6 +8,7 @@ const authRoutes = require("./routes/authRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const patientRoute = require("./routes/patientRoute");
 const doctorUploadRoute = require("./routes/doctorUploadRoute");
+const hospitalRoutes = require("./routes/hospitalRoutes");
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use("/api/auth", authRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/patient", patientRoute);
 app.use("/doctor", doctorUploadRoute);
+app.use("/hospital", hospitalRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to MediVault API" });

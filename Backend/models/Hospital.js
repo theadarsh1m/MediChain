@@ -10,6 +10,15 @@ const hospitalSchema = new mongoose.Schema(
     address: String,
     numberOfBeds: Number,
     contactNumber: String,
+    settings: {
+      notificationPreferences: {
+        email: { type: Boolean, default: true },
+        sms: { type: Boolean, default: false },
+        app: { type: Boolean, default: true },
+      },
+      theme: { type: String, default: "light" },
+      marketingEmails: { type: Boolean, default: false },
+    },
   },
   { timestamps: true }
 );
