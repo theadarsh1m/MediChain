@@ -5,7 +5,10 @@ const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
 const Hospital = require("../models/Hospital");
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required but not set.");
+}
 
 // Helper to determine which collection a user belongs to based on role
 function getRoleModel(role) {
