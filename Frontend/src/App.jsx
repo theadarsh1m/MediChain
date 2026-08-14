@@ -23,6 +23,11 @@ import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 import PortalPlaceholder from "./pages/PortalPlaceholder";
 import HospitalLayout from "./layouts/HospitalLayout";
 import HospitalDashboardPage from "./pages/hospital/HospitalDashboardPage";
+import HospitalDoctorsPage from "./pages/hospital/HospitalDoctorsPage";
+import HospitalPatientsPage from "./pages/hospital/HospitalPatientsPage";
+import HospitalDepartmentsPage from "./pages/hospital/HospitalDepartmentsPage";
+import HospitalReportsPage from "./pages/hospital/HospitalReportsPage";
+import HospitalSettingsPage from "./pages/hospital/HospitalSettingsPage";
 import HospitalPlaceholderPage from "./pages/hospital/HospitalPlaceholderPage";
 import DoctorLayout from "./layouts/DoctorLayout";
 import DoctorDashboardPage from "./pages/doctor/DoctorDashboardPage";
@@ -98,12 +103,12 @@ export default function App() {
               <Route path="/hospital" element={<HospitalLayout />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<HospitalDashboardPage />} />
-                <Route path="doctors" element={<HospitalPlaceholderPage title="Doctors Management" />} />
-                <Route path="patients" element={<HospitalPlaceholderPage title="Patients Management" />} />
+                <Route path="doctors" element={<HospitalDoctorsPage />} />
+                <Route path="patients" element={<HospitalPatientsPage />} />
                 <Route path="appointments" element={<AppointmentTablePage />} />
-                <Route path="departments" element={<HospitalPlaceholderPage title="Departments" />} />
-                <Route path="reports" element={<HospitalPlaceholderPage title="Reports" />} />
-                <Route path="settings" element={<HospitalPlaceholderPage title="Settings" />} />
+                <Route path="departments" element={<HospitalDepartmentsPage />} />
+                <Route path="reports" element={<HospitalReportsPage />} />
+                <Route path="settings" element={<HospitalSettingsPage />} />
               </Route>
             </Route>
           </Route>

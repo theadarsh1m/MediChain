@@ -29,6 +29,13 @@ router.get("/profile", hospitalController.getProfile);
 router.put("/profile", validateHospitalProfileUpdate, hospitalController.updateProfile);
 
 /**
+ * @route   PUT /hospital/beds
+ * @desc    Update hospital bed capacity
+ * @access  Private (Hospital)
+ */
+router.put("/beds", hospitalController.updateBeds);
+
+/**
  * @route   GET /hospital/dashboard
  * @desc    Fetch hospital dashboard stats
  * @access  Private (Hospital)
@@ -41,6 +48,55 @@ router.get("/dashboard", hospitalController.getDashboard);
  * @access  Private (Hospital)
  */
 router.get("/stats", hospitalController.getStats);
+
+/**
+ * @route   GET /hospital/doctors
+ * @desc    Fetch hospital doctors
+ * @access  Private (Hospital)
+ */
+router.get("/doctors", hospitalController.getDoctors);
+
+/**
+ * @route   POST /hospital/doctors/onboard
+ * @desc    Onboard a doctor to hospital
+ * @access  Private (Hospital)
+ */
+router.post("/doctors/onboard", hospitalController.onboardDoctor);
+
+/**
+ * @route   POST /hospital/doctors/:doctorId/affiliate
+ * @desc    Affiliate an existing doctor with this hospital
+ * @access  Private (Hospital)
+ */
+router.post("/doctors/:doctorId/affiliate", hospitalController.affiliateDoctor);
+
+/**
+ * @route   GET /hospital/patients
+ * @desc    Fetch hospital patients
+ * @access  Private (Hospital)
+ */
+router.get("/patients", hospitalController.getPatients);
+
+/**
+ * @route   POST /hospital/patients/admit
+ * @desc    Record patient hospital admission
+ * @access  Private (Hospital)
+ */
+router.post("/patients/admit", hospitalController.admitPatient);
+
+/**
+ * @route   GET /hospital/departments
+ * @desc    Fetch hospital departments
+ * @access  Private (Hospital)
+ */
+router.get("/departments", hospitalController.getDepartments);
+
+/**
+ * @route   GET /hospital/reports
+ * @desc    Fetch hospital analytics reports
+ * @access  Private (Hospital)
+ */
+router.get("/reports", hospitalController.getReports);
 
 /**
  * @route   GET /hospital/activity

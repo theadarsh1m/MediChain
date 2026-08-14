@@ -25,10 +25,12 @@ import EmptyState from "../../components/ui/EmptyState";
 import ErrorState from "../../components/ui/ErrorState";
 import SkeletonLoader from "../../components/ui/SkeletonLoader";
 import UpdateBedsModal from "../../components/hospital/UpdateBedsModal";
+import OnboardDoctorModal from "../../components/hospital/OnboardDoctorModal";
 import { useHospitalStore } from "../../store/hospitalStore";
 
 export default function HospitalDashboardPage() {
   const [bedsModalOpen, setBedsModalOpen] = useState(false);
+  const [onboardModalOpen, setOnboardModalOpen] = useState(false);
   const {
     fetchProfile,
     fetchDashboard,
@@ -218,7 +220,7 @@ export default function HospitalDashboardPage() {
             </h2>
             <div className="grid gap-3">
               <button
-                onClick={handleAddDoctorToast}
+                onClick={() => setOnboardModalOpen(true)}
                 className="flex items-center justify-between rounded-2xl border border-slate-100 p-4 hover:bg-slate-50/50 hover:shadow-sm transition dark:border-slate-800 dark:hover:bg-slate-800/40 text-left w-full"
               >
                 <div className="min-w-0">
@@ -324,6 +326,15 @@ export default function HospitalDashboardPage() {
         isOpen={bedsModalOpen}
         onClose={() => setBedsModalOpen(false)}
         currentBeds={profile?.numberOfBeds}
+      />
+
+      <OnboardDoctorModal
+        isOpen={onboardModalOpen}
+        onClose={() => setOnboardModalOpen(false)}
+        onDoctorAdded={() => {
+          fetchProfile();
+          fetchDashboard();
+        }}
       />
     </div>
   );
