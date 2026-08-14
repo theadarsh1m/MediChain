@@ -37,6 +37,12 @@ const doctorSchema = new mongoose.Schema(
 
     // Practice Details
     hospital: String,
+    department: String,
+    status: {
+      type: String,
+      enum: ["Active", "Suspended", "Pending Approval"],
+      default: "Active",
+    },
     consultationFee: Number,
     signatureImage: String,
 

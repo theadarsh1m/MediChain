@@ -33,6 +33,11 @@ export async function fetchPatientDossierRequest(patientId) {
   return response.data?.dossier ?? null;
 }
 
+export async function completeConsultationRequest(payload) {
+  const response = await client.post("/doctor/consultation/complete", payload);
+  return response.data;
+}
+
 export async function issuePrescriptionRequest(patientId, payload) {
   const response = await client.post(`/doctor/patients/${patientId}/prescription`, payload);
   return response.data;

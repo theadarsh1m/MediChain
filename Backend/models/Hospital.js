@@ -10,6 +10,15 @@ const hospitalSchema = new mongoose.Schema(
     address: String,
     numberOfBeds: Number,
     contactNumber: String,
+    customDepartments: [
+      {
+        name: String,
+        description: String,
+        headDoctor: String,
+        activeStatus: { type: String, default: "Active" },
+        bedAllocation: Number,
+      },
+    ],
     settings: {
       notificationPreferences: {
         email: { type: Boolean, default: true },

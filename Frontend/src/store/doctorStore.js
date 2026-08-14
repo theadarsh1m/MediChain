@@ -5,6 +5,7 @@ import {
   updateDoctorProfileRequest,
   fetchDoctorPatientsRequest,
   fetchPatientDossierRequest,
+  completeConsultationRequest,
   issuePrescriptionRequest,
   addDoctorNotesRequest,
   uploadToPatientRequest,
@@ -84,6 +85,22 @@ export const useDoctorStore = create((set, get) => ({
       return dossier;
     } catch (error) {
       const msg = error.response?.data?.message || "Failed to load patient dossier";
+      set({ error: msg, loading: false });
+      throw error;
+    }
+  },
+
+  completeConsultation: async (payload) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await completeConsultationRequest(payload);
+      // Refresh dashboard and patients
+      get().fetchDashboard();
+      get().fetchPatients();
+      set({ loading: false });
+      return res;
+    } catch (error) {
+      const msg = error.response?.data?.message || "Failed to complete consultation";
       set({ error: msg, loading: false });
       throw error;
     }

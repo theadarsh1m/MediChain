@@ -47,24 +47,10 @@ async function getDashboard(req, res) {
     if (!hospital) {
       return res.status(404).json({ message: "Hospital not found." });
     }
-    const stats = await hospitalService.getHospitalDashboardStats(hospital);
-    return res.status(200).json({ dashboard: stats });
+    const dashboardData = await hospitalService.getHospitalDashboardStats(hospital);
+    return res.status(200).json({ dashboard: dashboardData });
   } catch (error) {
     console.error("Error fetching dashboard statistics:", error);
-    return res.status(500).json({ message: "Internal server error.", error: error.message });
-  }
-}
-
-async function getStats(req, res) {
-  try {
-    const hospital = await Hospital.findById(req.user.id);
-    if (!hospital) {
-      return res.status(404).json({ message: "Hospital not found." });
-    }
-    const stats = await hospitalService.getDetailedStats(hospital);
-    return res.status(200).json({ stats });
-  } catch (error) {
-    console.error("Error fetching detailed statistics:", error);
     return res.status(500).json({ message: "Internal server error.", error: error.message });
   }
 }
@@ -75,11 +61,40 @@ async function getDoctors(req, res) {
     if (!hospital) {
       return res.status(404).json({ message: "Hospital not found." });
     }
-    const doctors = await hospitalService.getHospitalDoctors(hospital, req.query.search, req.query.filter);
+    const doctors = await hospitalService.getHospitalDoctors(
+      hospital,
+      req.query.search,
+      req.query.filter,
+      req.query.department
+    );
     return res.status(200).json({ doctors });
   } catch (error) {
     console.error("Error fetching hospital doctors:", error);
     return res.status(500).json({ message: "Internal server error.", error: error.message });
+  }
+}
+
+async function updateDoctorStatus(req, res) {
+  try {
+    const { doctorId } = req.params;
+    const { status } = req.body;
+    const doctor = await hospitalService.updateDoctorStatus(doctorId, status);
+    return res.status(200).json({ message: `Doctor status updated to ${status}.`, doctor });
+  } catch (error) {
+    console.error("Error updating doctor status:", error);
+    return res.status(400).json({ message: error.message || "Failed to update doctor status." });
+  }
+}
+
+async function assignDoctorDepartment(req, res) {
+  try {
+    const { doctorId } = req.params;
+    const { department } = req.body;
+    const doctor = await hospitalService.assignDoctorDepartment(doctorId, department);
+    return res.status(200).json({ message: `Doctor assigned to ${department} department.`, doctor });
+  } catch (error) {
+    console.error("Error assigning doctor department:", error);
+    return res.status(400).json({ message: error.message || "Failed to assign doctor department." });
   }
 }
 
@@ -153,6 +168,49 @@ async function getDepartments(req, res) {
   }
 }
 
+async function getAppointments(req, res) {
+  try {
+    const hospital = await Hospital.findById(req.user.id);
+    if (!hospital) {
+      return res.status(404).json({ message: "Hospital not found." });
+    }
+    const appointments = await hospitalService.getHospitalAppointments(
+      hospital,
+      req.query.search,
+      req.query.department,
+      req.query.status
+    );
+    return res.status(200).json({ appointments });
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    return res.status(500).json({ message: "Internal server error.", error: error.message });
+  }
+}
+
+async function reassignAppointment(req, res) {
+  try {
+    const { appointmentId } = req.params;
+    const { doctorId } = req.body;
+    const appointment = await hospitalService.reassignHospitalAppointment(appointmentId, doctorId);
+    return res.status(200).json({ message: "Appointment reassigned successfully.", appointment });
+  } catch (error) {
+    console.error("Error reassigning appointment:", error);
+    return res.status(400).json({ message: error.message || "Failed to reassign appointment." });
+  }
+}
+
+async function cancelAppointment(req, res) {
+  try {
+    const { appointmentId } = req.params;
+    const { reason } = req.body;
+    const appointment = await hospitalService.cancelHospitalAppointment(appointmentId, reason);
+    return res.status(200).json({ message: "Appointment cancelled by hospital.", appointment });
+  } catch (error) {
+    console.error("Error cancelling appointment:", error);
+    return res.status(400).json({ message: error.message || "Failed to cancel appointment." });
+  }
+}
+
 async function getReports(req, res) {
   try {
     const hospital = await Hospital.findById(req.user.id);
@@ -163,20 +221,6 @@ async function getReports(req, res) {
     return res.status(200).json({ reports });
   } catch (error) {
     console.error("Error fetching hospital reports:", error);
-    return res.status(500).json({ message: "Internal server error.", error: error.message });
-  }
-}
-
-async function getActivity(req, res) {
-  try {
-    const hospital = await Hospital.findById(req.user.id);
-    if (!hospital) {
-      return res.status(404).json({ message: "Hospital not found." });
-    }
-    const activity = await hospitalService.getRecentActivity(hospital);
-    return res.status(200).json({ activity });
-  } catch (error) {
-    console.error("Error fetching recent activity:", error);
     return res.status(500).json({ message: "Internal server error.", error: error.message });
   }
 }
@@ -212,15 +256,18 @@ module.exports = {
   updateProfile,
   updateBeds,
   getDashboard,
-  getStats,
   getDoctors,
+  updateDoctorStatus,
+  assignDoctorDepartment,
   affiliateDoctor,
   onboardDoctor,
   getPatients,
   admitPatient,
   getDepartments,
+  getAppointments,
+  reassignAppointment,
+  cancelAppointment,
   getReports,
-  getActivity,
   getSettings,
   updateSettings,
 };

@@ -40,6 +40,13 @@ const appointmentSchema = new mongoose.Schema(
         trim: true,
       },
     ],
+    vitals: {
+      bloodPressure: String,
+      heartRate: String,
+      temperature: String,
+      weight: String,
+      spO2: String,
+    },
     notes: {
       type: String,
       trim: true,
@@ -52,6 +59,18 @@ const appointmentSchema = new mongoose.Schema(
       type: String, // Can be a URL to an uploaded file or simple text
       trim: true,
     },
+    prescriptionsList: [
+      {
+        medicineName: String,
+        dosage: String,
+        frequency: String,
+        duration: String,
+        instructions: String,
+      },
+    ],
+    followUpDate: {
+      type: Date,
+    },
     attachments: [
       {
         type: String, // Array of URLs (images, documents)
@@ -59,13 +78,12 @@ const appointmentSchema = new mongoose.Schema(
     ],
     status: {
       type: String,
-      enum: ["Requested", "Pending", "Confirmed", "Rescheduled", "Completed", "Cancelled"],
+      enum: ["Requested", "Pending", "Confirmed", "In Progress", "Rescheduled", "Completed", "Cancelled"],
       default: "Requested",
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      // Could be Patient, Doctor, or Hospital who created the booking
     },
     completedAt: {
       type: Date,

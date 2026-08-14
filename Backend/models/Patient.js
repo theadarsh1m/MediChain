@@ -52,6 +52,14 @@ const patientSchema = new mongoose.Schema(
       ],
       exerciseRoutine: String,
       mentalHealthStatus: String,
+      vitals: {
+        bloodPressure: String,
+        heartRate: String,
+        temperature: String,
+        weight: String,
+        spO2: String,
+        recordedAt: Date,
+      },
     },
 
     diagnostics: {
@@ -67,6 +75,18 @@ const patientSchema = new mongoose.Schema(
     admin: {
       doctorNotes: String,
       prescriptions: [String],
+      pastConsultations: [
+        {
+          doctorName: String,
+          doctorSpecialization: String,
+          date: { type: Date, default: Date.now },
+          diagnosis: String,
+          notes: String,
+          prescription: String,
+          vitals: Object,
+          followUpDate: Date,
+        },
+      ],
       nextAppointment: Date,
       insuranceDetails: String,
       medicalDocuments: [String],

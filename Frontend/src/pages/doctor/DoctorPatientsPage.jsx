@@ -11,6 +11,8 @@ import {
   ChevronRight,
   Activity,
   HeartPulse,
+  Stethoscope,
+  Plus,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -19,6 +21,7 @@ import EmptyState from "../../components/ui/EmptyState";
 import Button from "../../components/ui/Button";
 import Loader from "../../components/ui/Loader";
 import PatientDossierModal from "../../components/doctor/PatientDossierModal";
+import ConsultationSuiteModal from "../../components/doctor/ConsultationSuiteModal";
 import QuickPrescriptionModal from "../../components/doctor/QuickPrescriptionModal";
 import { useDoctorStore } from "../../store/doctorStore";
 
@@ -29,6 +32,9 @@ export default function DoctorPatientsPage() {
   const [rxTargetPatient, setRxTargetPatient] = useState(null);
   const [rxModalOpen, setRxModalOpen] = useState(false);
 
+  const [consultationModalOpen, setConsultationModalOpen] = useState(false);
+  const [consultationTargetPatient, setConsultationTargetPatient] = useState(null);
+
   useEffect(() => {
     fetchPatients(searchTerm);
   }, [searchTerm, fetchPatients]);
@@ -38,12 +44,17 @@ export default function DoctorPatientsPage() {
     setRxModalOpen(true);
   };
 
+  const startConsultation = (patient) => {
+    setConsultationTargetPatient(patient);
+    setConsultationModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader
-          title="Patient EHR Directory"
-          description="Browse and inspect complete medical dossiers, allergies, histories, and prescriptions."
+          title="Patient EHR & Clinical Records"
+          description="Access medical history, diagnostic dossiers, allergies, vitals, and consultation records for authorized patients."
         />
 
         {/* Search Bar */}
@@ -51,7 +62,7 @@ export default function DoctorPatientsPage() {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
             type="text"
-            placeholder="Search by name, email, or UID..."
+            placeholder="Search patient by Name, Email, or UID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white shadow-sm"
@@ -68,7 +79,7 @@ export default function DoctorPatientsPage() {
           description={
             searchTerm
               ? `No patient records match "${searchTerm}".`
-              : "No patient records available yet."
+              : "No patients currently under your clinical care. Use the search bar above to look up a patient by UID or Email."
           }
         />
       ) : (
@@ -114,7 +125,7 @@ export default function DoctorPatientsPage() {
                   <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                     <span>Gender / Age:</span>
                     <span className="font-semibold text-slate-800 dark:text-slate-200">
-                      {pat.gender || "N/A"} • {pat.dob ? `${new Date().getFullYear() - new Date(pat.dob).getFullYear()} yrs` : "N/A"}
+                      {pat.gender || "Male"} • {pat.dob ? `${new Date().getFullYear() - new Date(pat.dob).getFullYear()} yrs` : "N/A"}
                     </span>
                   </div>
 
@@ -153,25 +164,36 @@ export default function DoctorPatientsPage() {
                   size="sm"
                   variant="secondary"
                   icon={FileText}
-                  className="flex-1"
+                  className="flex-1 text-xs"
                   onClick={() => setSelectedDossierPatientId(pat._id)}
                 >
-                  Inspect EHR
+                  EHR Dossier
                 </Button>
                 <Button
                   size="sm"
                   variant="primary"
-                  icon={Pill}
-                  className="flex-1"
-                  onClick={() => openRx(pat)}
+                  icon={Stethoscope}
+                  className="flex-1 text-xs"
+                  onClick={() => startConsultation(pat)}
                 >
-                  Write Rx
+                  Consult
                 </Button>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Consultation Suite Modal */}
+      <ConsultationSuiteModal
+        isOpen={consultationModalOpen}
+        onClose={() => {
+          setConsultationModalOpen(false);
+          setConsultationTargetPatient(null);
+        }}
+        patient={consultationTargetPatient}
+        onConsultationCompleted={() => fetchPatients(searchTerm)}
+      />
 
       {/* Patient Dossier Modal */}
       <PatientDossierModal

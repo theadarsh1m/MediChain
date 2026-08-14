@@ -3,15 +3,16 @@ import {
   BriefcaseMedical,
   Search,
   Plus,
-  Filter,
-  Stethoscope,
-  Award,
-  Video,
-  DollarSign,
-  Mail,
-  UserCheck,
   Building2,
-  CheckCircle2,
+  Calendar,
+  Users2,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Clock,
+  Eye,
+  ShieldAlert,
+  Edit3,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -20,141 +21,129 @@ import EmptyState from "../../components/ui/EmptyState";
 import Button from "../../components/ui/Button";
 import Loader from "../../components/ui/Loader";
 import OnboardDoctorModal from "../../components/hospital/OnboardDoctorModal";
+import AssignDepartmentModal from "../../components/hospital/AssignDepartmentModal";
+import DoctorAvailabilityModal from "../../components/hospital/DoctorAvailabilityModal";
 import { useHospitalStore } from "../../store/hospitalStore";
 
 export default function HospitalDoctorsPage() {
-  const { doctors, fetchDoctors, affiliateDoctor, profile, loading } = useHospitalStore();
+  const { doctors, fetchDoctors, updateDoctorStatus, loading } = useHospitalStore();
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDept, setSelectedDept] = useState("All");
-  const [viewFilter, setViewFilter] = useState("all"); // "all" | "affiliated"
+  const [departmentFilter, setDepartmentFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All"); // "All" | "Active" | "Suspended"
+
   const [onboardModalOpen, setOnboardModalOpen] = useState(false);
-  const [affiliatingId, setAffiliatingId] = useState(null);
+  const [assignDeptModalOpen, setAssignDeptModalOpen] = useState(false);
+  const [availabilityModalOpen, setAvailabilityModalOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
 
   useEffect(() => {
-    fetchDoctors(searchTerm);
-  }, [searchTerm, fetchDoctors]);
+    fetchDoctors(searchTerm, departmentFilter);
+  }, [searchTerm, departmentFilter, fetchDoctors]);
 
-  const handleAffiliate = async (doctorId, doctorName) => {
-    setAffiliatingId(doctorId);
+  const handleStatusToggle = async (doc) => {
+    const nextStatus = doc.status === "Active" ? "Suspended" : "Active";
     try {
-      await affiliateDoctor(doctorId);
-      toast.success(`Dr. ${doctorName} is now affiliated with ${profile?.name || "your hospital"}!`);
-      fetchDoctors(searchTerm);
+      await updateDoctorStatus(doc._id, nextStatus);
+      toast.success(`Dr. ${doc.name} status changed to ${nextStatus}.`);
     } catch (err) {
-      toast.error(err.message || "Failed to affiliate doctor.");
-    } finally {
-      setAffiliatingId(null);
+      toast.error(err.message || "Failed to update status.");
     }
   };
 
+  const handleOpenAssignDept = (doc) => {
+    setSelectedDoctor(doc);
+    setAssignDeptModalOpen(true);
+  };
+
+  const handleOpenAvailability = (doc) => {
+    setSelectedDoctor(doc);
+    setAvailabilityModalOpen(true);
+  };
+
   const filteredDoctors = doctors.filter((doc) => {
-    // Check affiliation filter
-    if (viewFilter === "affiliated") {
-      const isAffiliated =
-        doc.hospital === profile?.name ||
-        doc.hospital === profile?._id ||
-        doc.hospital === profile?.uid;
-      if (!isAffiliated) return false;
-    }
-
-    // Check department filter
-    if (selectedDept !== "All" && doc.specialization !== selectedDept) {
-      return false;
-    }
-
-    // Check search term
-    if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
-      const matchName = doc.name?.toLowerCase().includes(q);
-      const matchEmail = doc.email?.toLowerCase().includes(q);
-      const matchSpec = doc.specialization?.toLowerCase().includes(q);
-      const matchLicense = doc.licenseNumber?.toLowerCase().includes(q);
-      if (!matchName && !matchEmail && !matchSpec && !matchLicense) {
-        return false;
-      }
-    }
-
+    if (statusFilter !== "All" && doc.status !== statusFilter) return false;
     return true;
   });
 
-  const departments = ["All", ...new Set(doctors.map((d) => d.specialization).filter(Boolean))];
-
   return (
     <div className="space-y-6">
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader
-          title="Hospital Doctors & Practitioners"
-          description="Manage, affiliate, and onboard physicians and clinical staff to your hospital."
+          title="Doctor Management & Staff Roster"
+          description="Manage hospital doctors, assign departments, review workloads, approve or suspend practitioners."
         />
+
         <Button
           variant="primary"
+          size="sm"
           icon={Plus}
           onClick={() => setOnboardModalOpen(true)}
-          className="self-start sm:self-center"
+          className="text-xs self-start sm:self-center"
         >
           Onboard New Doctor
         </Button>
       </div>
 
-      {/* Filter and Search Bar */}
+      {/* Controls: Search, Department Filter, Status Filter */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Search */}
-        <div className="relative min-w-[280px] flex-1 max-w-md">
+        {/* Search Bar */}
+        <div className="relative min-w-[280px]">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
             type="text"
-            placeholder="Search doctors by name, license, or specialty..."
+            placeholder="Search doctors by name, license, UID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white shadow-sm"
           />
         </div>
 
-        {/* View Tabs & Department Filter */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex rounded-2xl bg-slate-100 p-1 dark:bg-slate-800">
-            <button
-              onClick={() => setViewFilter("all")}
-              className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                viewFilter === "all"
-                  ? "bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white"
-                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-              }`}
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Department Select */}
+          <div className="flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+            <span className="text-[11px] font-bold text-slate-400">Dept:</span>
+            <select
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
             >
-              All Doctors ({doctors.length})
-            </button>
-            <button
-              onClick={() => setViewFilter("affiliated")}
-              className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                viewFilter === "affiliated"
-                  ? "bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white"
-                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-              }`}
-            >
-              Affiliated Staff
-            </button>
+              <option value="All">All Departments</option>
+              <option value="Cardiology">Cardiology</option>
+              <option value="Neurology">Neurology</option>
+              <option value="Orthopedics">Orthopedics</option>
+              <option value="Pediatrics">Pediatrics</option>
+              <option value="ENT">ENT</option>
+              <option value="Dermatology">Dermatology</option>
+              <option value="General Medicine">General Medicine</option>
+              <option value="Emergency Care">Emergency Care</option>
+            </select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Filter size={15} className="text-slate-400" />
-            <select
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-            >
-              {departments.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept === "All" ? "All Specialties" : dept}
-                </option>
-              ))}
-            </select>
+          {/* Status Tabs */}
+          <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+            {["All", "Active", "Suspended"].map((st) => (
+              <button
+                key={st}
+                onClick={() => setStatusFilter(st)}
+                className={`rounded-xl px-3 py-1 text-xs font-bold transition ${
+                  statusFilter === st
+                    ? "bg-blue-600 text-white dark:bg-emerald-500 dark:text-slate-950 shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                }`}
+              >
+                {st}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Doctors Grid */}
+      {/* Doctor Cards Grid */}
       {loading && doctors.length === 0 ? (
-        <Loader label="Loading hospital medical staff..." />
+        <Loader label="Loading doctor roster..." />
       ) : filteredDoctors.length === 0 ? (
         <EmptyState
           icon={BriefcaseMedical}
@@ -162,29 +151,23 @@ export default function HospitalDoctorsPage() {
           description={
             searchTerm
               ? `No doctors match "${searchTerm}".`
-              : viewFilter === "affiliated"
-              ? "No doctors currently affiliated with this hospital. Switch to 'All Doctors' to affiliate practitioners or click Onboard Doctor."
-              : "No doctors registered in the system."
+              : "No doctor records match the selected filters."
           }
         />
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filteredDoctors.map((doc) => {
-            const isAffiliated =
-              doc.hospital === profile?.name ||
-              doc.hospital === profile?._id ||
-              doc.hospital === profile?.uid;
-
+            const isActive = doc.status === "Active";
             return (
               <div
                 key={doc._id}
                 className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
               >
                 <div>
-                  {/* Doctor Head */}
+                  {/* Doctor Card Top */}
                   <div className="flex items-start justify-between gap-3 mb-4">
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="h-12 w-12 shrink-0 rounded-2xl bg-blue-100 dark:bg-emerald-500/20 flex items-center justify-center font-bold text-blue-700 dark:text-emerald-300 overflow-hidden border border-blue-200 dark:border-emerald-500/30">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-12 w-12 shrink-0 rounded-2xl bg-blue-100 dark:bg-emerald-500/20 flex items-center justify-center font-bold text-blue-700 dark:text-emerald-300 text-base border border-blue-200 dark:border-emerald-500/30 overflow-hidden">
                         {doc.profilePic ? (
                           <img src={doc.profilePic} alt={doc.name} className="h-full w-full object-cover" />
                         ) : (
@@ -195,73 +178,83 @@ export default function HospitalDoctorsPage() {
                         <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">
                           Dr. {doc.name}
                         </h3>
-                        <span className="inline-block rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 dark:bg-emerald-500/20 dark:text-emerald-300 mt-0.5">
-                          {doc.specialization || "General Medicine"}
-                        </span>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{doc.email}</p>
                       </div>
                     </div>
 
-                    {isAffiliated ? (
-                      <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
-                        <CheckCircle2 size={11} /> Affiliated
-                      </span>
-                    ) : (
-                      <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                        External
-                      </span>
-                    )}
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                        isActive
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                          : "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
+                      }`}
+                    >
+                      {doc.status || "Active"}
+                    </span>
                   </div>
 
-                  {/* Meta details */}
-                  <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400 pb-4 border-b border-slate-100 dark:border-slate-800">
+                  {/* Doctor Stats & Department Table Row */}
+                  <div className="space-y-2 text-xs pb-4 border-b border-slate-100 dark:border-slate-800">
                     <div className="flex items-center justify-between">
-                      <span>License No:</span>
-                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{doc.licenseNumber || "N/A"}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span>Experience:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">{doc.experience ? `${doc.experience} Years` : "5+ Years"}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span>Consultation Fee:</span>
-                      <span className="font-bold text-slate-900 dark:text-slate-100">${doc.consultationFee || 50}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span>Telemedicine:</span>
-                      <span className="rounded bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">
-                        {doc.allowTelemedicine ?? true ? "Active" : "Disabled"}
+                      <span className="text-slate-500 dark:text-slate-400">Department:</span>
+                      <span className="font-bold text-blue-700 dark:text-emerald-400">
+                        {doc.department || doc.specialization || "General Medicine"}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span>Hospital Tag:</span>
-                      <span className="font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[140px]">
-                        {doc.hospital || "Independent"}
+                      <span className="text-slate-500 dark:text-slate-400">Appointments Today:</span>
+                      <span className="font-bold text-slate-900 dark:text-slate-100">
+                        {doc.appointmentsTodayCount || 0}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">Total Patients:</span>
+                      <span className="font-bold text-purple-700 dark:text-purple-300">
+                        {doc.totalPatients || 0}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">Hospital:</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[150px]">
+                        {doc.hospital || "MediVault Network"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Card Footer */}
-                <div className="pt-3 flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-                  <span className="flex items-center gap-1 truncate max-w-[150px]">
-                    <Mail size={12} /> {doc.email}
-                  </span>
+                {/* Actions */}
+                <div className="flex flex-wrap items-center gap-2 pt-4 mt-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={Edit3}
+                    className="flex-1 text-xs"
+                    onClick={() => handleOpenAssignDept(doc)}
+                  >
+                    Assign Dept
+                  </Button>
 
-                  {!isAffiliated && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleAffiliate(doc._id, doc.name)}
-                      loading={affiliatingId === doc._id}
-                      className="text-[11px] py-1 px-2.5 h-auto"
-                    >
-                      Affiliate
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={Eye}
+                    className="flex-1 text-xs"
+                    onClick={() => handleOpenAvailability(doc)}
+                  >
+                    Availability
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant={isActive ? "danger" : "primary"}
+                    className="text-xs px-2.5"
+                    onClick={() => handleStatusToggle(doc)}
+                  >
+                    {isActive ? "Suspend" : "Activate"}
+                  </Button>
                 </div>
               </div>
             );
@@ -269,11 +262,28 @@ export default function HospitalDoctorsPage() {
         </div>
       )}
 
-      {/* Onboard Doctor Modal */}
+      {/* Modals */}
       <OnboardDoctorModal
         isOpen={onboardModalOpen}
         onClose={() => setOnboardModalOpen(false)}
-        onDoctorAdded={() => fetchDoctors()}
+      />
+
+      <AssignDepartmentModal
+        isOpen={assignDeptModalOpen}
+        onClose={() => {
+          setAssignDeptModalOpen(false);
+          setSelectedDoctor(null);
+        }}
+        doctor={selectedDoctor}
+      />
+
+      <DoctorAvailabilityModal
+        isOpen={availabilityModalOpen}
+        onClose={() => {
+          setAvailabilityModalOpen(false);
+          setSelectedDoctor(null);
+        }}
+        doctor={selectedDoctor}
       />
     </div>
   );

@@ -43,15 +43,8 @@ router.put("/beds", hospitalController.updateBeds);
 router.get("/dashboard", hospitalController.getDashboard);
 
 /**
- * @route   GET /hospital/stats
- * @desc    Fetch detailed hospital stats
- * @access  Private (Hospital)
- */
-router.get("/stats", hospitalController.getStats);
-
-/**
  * @route   GET /hospital/doctors
- * @desc    Fetch hospital doctors
+ * @desc    Fetch hospital doctors with workload & status
  * @access  Private (Hospital)
  */
 router.get("/doctors", hospitalController.getDoctors);
@@ -71,8 +64,22 @@ router.post("/doctors/onboard", hospitalController.onboardDoctor);
 router.post("/doctors/:doctorId/affiliate", hospitalController.affiliateDoctor);
 
 /**
+ * @route   PUT /hospital/doctors/:doctorId/status
+ * @desc    Approve, Activate, or Suspend a doctor
+ * @access  Private (Hospital)
+ */
+router.put("/doctors/:doctorId/status", hospitalController.updateDoctorStatus);
+
+/**
+ * @route   PUT /hospital/doctors/:doctorId/department
+ * @desc    Assign doctor department
+ * @access  Private (Hospital)
+ */
+router.put("/doctors/:doctorId/department", hospitalController.assignDoctorDepartment);
+
+/**
  * @route   GET /hospital/patients
- * @desc    Fetch hospital patients
+ * @desc    Fetch hospital patients (administrative view with clinical privacy boundaries)
  * @access  Private (Hospital)
  */
 router.get("/patients", hospitalController.getPatients);
@@ -86,10 +93,31 @@ router.post("/patients/admit", hospitalController.admitPatient);
 
 /**
  * @route   GET /hospital/departments
- * @desc    Fetch hospital departments
+ * @desc    Fetch hospital departments and wings
  * @access  Private (Hospital)
  */
 router.get("/departments", hospitalController.getDepartments);
+
+/**
+ * @route   GET /hospital/appointments
+ * @desc    Fetch global hospital appointments
+ * @access  Private (Hospital)
+ */
+router.get("/appointments", hospitalController.getAppointments);
+
+/**
+ * @route   PUT /hospital/appointments/:appointmentId/reassign
+ * @desc    Reassign appointment to another doctor
+ * @access  Private (Hospital)
+ */
+router.put("/appointments/:appointmentId/reassign", hospitalController.reassignAppointment);
+
+/**
+ * @route   PUT /hospital/appointments/:appointmentId/cancel
+ * @desc    Cancel appointment by hospital administration
+ * @access  Private (Hospital)
+ */
+router.put("/appointments/:appointmentId/cancel", hospitalController.cancelAppointment);
 
 /**
  * @route   GET /hospital/reports
@@ -97,13 +125,6 @@ router.get("/departments", hospitalController.getDepartments);
  * @access  Private (Hospital)
  */
 router.get("/reports", hospitalController.getReports);
-
-/**
- * @route   GET /hospital/activity
- * @desc    Fetch recent hospital activities
- * @access  Private (Hospital)
- */
-router.get("/activity", hospitalController.getActivity);
 
 /**
  * @route   GET /hospital/settings

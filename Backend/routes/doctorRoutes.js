@@ -46,6 +46,13 @@ router.get("/patients", doctorController.getPatients);
 router.get("/patients/:patientId", doctorController.getPatientDossier);
 
 /**
+ * @route   POST /doctor/consultation/complete
+ * @desc    Complete consultation and write to EHR record
+ * @access  Private (Doctor)
+ */
+router.post("/consultation/complete", doctorController.completeConsultation);
+
+/**
  * @route   POST /doctor/patients/:patientId/prescription
  * @desc    Issue prescription to patient
  * @access  Private (Doctor)

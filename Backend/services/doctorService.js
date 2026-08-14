@@ -70,8 +70,9 @@ async function getDoctorDashboardStats(doctor) {
   });
 
   const pendingRequests = appointments.filter((apt) => apt.status === "Requested");
+  const inProgressAppointments = appointments.filter((apt) => apt.status === "In Progress");
   const upcomingAppointments = appointments.filter((apt) =>
-    ["Pending", "Confirmed", "Rescheduled"].includes(apt.status)
+    ["Pending", "Confirmed", "Rescheduled", "In Progress"].includes(apt.status)
   );
   const completedAppointments = appointments.filter((apt) => apt.status === "Completed");
 
@@ -96,6 +97,7 @@ async function getDoctorDashboardStats(doctor) {
     metrics: {
       todayCount: todayAppointments.length,
       pendingRequestsCount: pendingRequests.length,
+      inProgressCount: inProgressAppointments.length,
       upcomingCount: upcomingAppointments.length,
       completedCount: completedAppointments.length,
       totalPatientsCount: totalPatientsCount,
@@ -111,9 +113,11 @@ async function getDoctorDashboardStats(doctor) {
 }
 
 async function getDoctorPatients(doctorId, searchQuery = "") {
-  // Find all appointments for this doctor
-  const appointments = await Appointment.find({ doctor: doctorId }).select("patient createdAt updatedAt status diagnosis notes prescription");
-  
+  // Find all appointments for this doctor to determine authorized patients
+  const appointments = await Appointment.find({ doctor: doctorId }).select(
+    "patient createdAt updatedAt status diagnosis notes prescription"
+  );
+
   const patientIdToApts = {};
   for (const apt of appointments) {
     if (apt.patient) {
@@ -125,19 +129,21 @@ async function getDoctorPatients(doctorId, searchQuery = "") {
     }
   }
 
-  const patientIds = Object.keys(patientIdToApts);
+  const authorizedPatientIds = Object.keys(patientIdToApts);
 
   let filter = {};
   if (searchQuery && searchQuery.trim()) {
     const regex = new RegExp(searchQuery.trim(), "i");
+    // If searching by UID / email / name, allow lookup
     filter = {
       $or: [{ name: regex }, { email: regex }, { uid: regex }, { phone: regex }],
     };
-  } else if (patientIds.length > 0) {
-    filter = { _id: { $in: patientIds } };
+  } else if (authorizedPatientIds.length > 0) {
+    // Only return patients the doctor is authorized to treat
+    filter = { _id: { $in: authorizedPatientIds } };
   } else {
-    // If no past appointments, return latest registered patients so doctor can browse/search
-    filter = {};
+    // If no past appointments yet, return empty list (enforcing doctor authorization scope)
+    filter = { _id: { $in: [] } };
   }
 
   const patients = await Patient.find(filter)
@@ -153,6 +159,7 @@ async function getDoctorPatients(doctorId, searchQuery = "") {
       consultationCount: patApts.length,
       lastConsultationDate: patApts.length > 0 ? patApts[patApts.length - 1].updatedAt : null,
       lastDiagnosis: patApts.find((a) => a.diagnosis)?.diagnosis || null,
+      isAuthorized: authorizedPatientIds.includes(pat._id.toString()),
     };
   });
 
@@ -173,6 +180,110 @@ async function getPatientDossier(patientId, doctorId) {
   return {
     patient: sanitizePatient(patient),
     appointmentHistory: pastDoctorAppointments,
+  };
+}
+
+async function completeConsultation(doctorId, { appointmentId, patientId, symptoms, vitals, diagnosis, notes, prescriptionsList, followUpDate, attachments }) {
+  const doctor = await Doctor.findById(doctorId).select("name specialization");
+  if (!doctor) throw new Error("Doctor not found");
+
+  const patient = await Patient.findById(patientId);
+  if (!patient) throw new Error("Patient not found");
+
+  // 1. Format Prescription
+  let formattedRx = "";
+  if (Array.isArray(prescriptionsList) && prescriptionsList.length > 0) {
+    formattedRx = prescriptionsList
+      .filter((item) => item.medicineName && item.medicineName.trim())
+      .map((item, idx) => {
+        return `${idx + 1}. ${item.medicineName} | Dosage: ${item.dosage || "Standard"} | Freq: ${item.frequency || "Once daily"} | Duration: ${item.duration || "As advised"} | Instructions: ${item.instructions || "After meals"}`;
+      })
+      .join("\n");
+  }
+
+  const doctorSignature = `Prescribed by Dr. ${doctor.name} (${doctor.specialization}) on ${new Date().toLocaleDateString()}`;
+  const fullRxText = formattedRx ? `${formattedRx}\n— ${doctorSignature}` : "";
+
+  // 2. Update Patient Vitals
+  if (vitals && Object.keys(vitals).length > 0) {
+    patient.currentHealth.vitals = {
+      bloodPressure: vitals.bloodPressure || patient.currentHealth?.vitals?.bloodPressure,
+      heartRate: vitals.heartRate || patient.currentHealth?.vitals?.heartRate,
+      temperature: vitals.temperature || patient.currentHealth?.vitals?.temperature,
+      weight: vitals.weight || patient.currentHealth?.vitals?.weight,
+      spO2: vitals.spO2 || patient.currentHealth?.vitals?.spO2,
+      recordedAt: new Date(),
+    };
+  }
+
+  // 3. Update Patient Prescriptions
+  if (fullRxText) {
+    patient.admin.prescriptions = patient.admin.prescriptions || [];
+    patient.admin.prescriptions.unshift(fullRxText);
+  }
+
+  // 4. Update Patient Past Consultations Record
+  const consultationEntry = {
+    doctorName: doctor.name,
+    doctorSpecialization: doctor.specialization,
+    date: new Date(),
+    diagnosis: diagnosis || "Clinical Medical Consultation",
+    notes: notes || "",
+    prescription: fullRxText,
+    vitals: vitals || {},
+    followUpDate: followUpDate ? new Date(followUpDate) : null,
+  };
+
+  patient.admin.pastConsultations = patient.admin.pastConsultations || [];
+  patient.admin.pastConsultations.unshift(consultationEntry);
+
+  // 5. Update Health Conditions & Next Appointment
+  if (diagnosis && !patient.medicalHistory.healthConditions.includes(diagnosis)) {
+    patient.medicalHistory.healthConditions.push(diagnosis);
+  }
+
+  if (followUpDate) {
+    patient.admin.nextAppointment = new Date(followUpDate);
+  }
+
+  // 6. Medical Documents / Reports
+  if (Array.isArray(attachments) && attachments.length > 0) {
+    patient.admin.medicalDocuments = patient.admin.medicalDocuments || [];
+    patient.admin.medicalDocuments.push(...attachments);
+  }
+
+  // Save Patient EHR
+  await patient.save();
+
+  // 7. Update Appointment
+  let updatedAppointment = null;
+  if (appointmentId) {
+    const appointment = await Appointment.findById(appointmentId);
+    if (appointment && appointment.doctor.toString() === doctorId.toString()) {
+      appointment.status = "Completed";
+      appointment.completedAt = new Date();
+      if (symptoms) appointment.symptoms = Array.isArray(symptoms) ? symptoms : [symptoms];
+      if (vitals) appointment.vitals = vitals;
+      if (diagnosis) appointment.diagnosis = diagnosis;
+      if (notes) appointment.notes = notes;
+      if (fullRxText) appointment.prescription = fullRxText;
+      if (prescriptionsList) appointment.prescriptionsList = prescriptionsList;
+      if (followUpDate) appointment.followUpDate = new Date(followUpDate);
+      if (attachments) appointment.attachments = attachments;
+      await appointment.save();
+      updatedAppointment = appointment;
+    }
+  }
+
+  // 8. Increment Doctor's Completed Consultations Count
+  await Doctor.findByIdAndUpdate(doctorId, {
+    $inc: { "appointmentStats.completed": 1, totalPatients: 1 },
+  });
+
+  return {
+    appointment: updatedAppointment,
+    patient: sanitizePatient(patient),
+    consultation: consultationEntry,
   };
 }
 
@@ -290,6 +401,7 @@ module.exports = {
   getDoctorDashboardStats,
   getDoctorPatients,
   getPatientDossier,
+  completeConsultation,
   issuePrescription,
   addClinicalNotes,
   getDoctorSettings,

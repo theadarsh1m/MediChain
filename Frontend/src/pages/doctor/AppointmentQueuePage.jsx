@@ -13,6 +13,8 @@ import {
   Clock,
   Calendar,
   AlertCircle,
+  Play,
+  RotateCcw,
 } from "lucide-react";
 
 import Button from "../../components/ui/Button";
@@ -20,6 +22,7 @@ import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import EmptyState from "../../components/ui/EmptyState";
 import Loader from "../../components/ui/Loader";
 import PageHeader from "../../components/ui/PageHeader";
+import ConsultationSuiteModal from "../../components/doctor/ConsultationSuiteModal";
 import PatientDossierModal from "../../components/doctor/PatientDossierModal";
 import { useAppointmentStore } from "../../store/appointmentStore";
 
@@ -27,9 +30,12 @@ export default function AppointmentQueuePage() {
   const navigate = useNavigate();
   const { appointments, fetchAppointments, updateStatus, loading } = useAppointmentStore();
   const [confirmModal, setConfirmModal] = useState({ open: false, id: null, action: null });
-  const [activeTab, setActiveTab] = useState("all"); // "all" | "requests" | "upcoming" | "completed" | "cancelled"
+  const [activeTab, setActiveTab] = useState("all"); // "all" | "requests" | "confirmed" | "inprogress" | "completed" | "cancelled"
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDossierPatientId, setSelectedDossierPatientId] = useState(null);
+
+  const [consultationModalOpen, setConsultationModalOpen] = useState(false);
+  const [consultationTarget, setConsultationTarget] = useState(null);
 
   useEffect(() => {
     fetchAppointments();
@@ -46,9 +52,20 @@ export default function AppointmentQueuePage() {
       await updateStatus(id, newStatus);
       toast.success(`Appointment ${newStatus.toLowerCase()}.`);
       setConfirmModal({ open: false, id: null, action: null });
+      fetchAppointments();
     } catch (error) {
       toast.error(error.message || `Failed to ${action} appointment`);
     }
+  };
+
+  const startConsultation = async (apt) => {
+    if (apt.status === "Confirmed" || apt.status === "Pending" || apt.status === "Requested") {
+      try {
+        await updateStatus(apt._id, "In Progress");
+      } catch {}
+    }
+    setConsultationTarget(apt);
+    setConsultationModalOpen(true);
   };
 
   if (loading && appointments.length === 0) {
@@ -61,13 +78,14 @@ export default function AppointmentQueuePage() {
       !searchTerm ||
       apt.patient?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       apt.patient?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      apt.patient?.uid?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       apt.reason?.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (!matchesSearch) return false;
 
     if (activeTab === "requests") return apt.status === "Requested";
-    if (activeTab === "upcoming")
-      return ["Pending", "Confirmed", "Rescheduled"].includes(apt.status);
+    if (activeTab === "confirmed") return apt.status === "Confirmed";
+    if (activeTab === "inprogress") return apt.status === "In Progress";
     if (activeTab === "completed") return apt.status === "Completed";
     if (activeTab === "cancelled") return apt.status === "Cancelled";
 
@@ -75,9 +93,8 @@ export default function AppointmentQueuePage() {
   });
 
   const requestedCount = appointments.filter((a) => a.status === "Requested").length;
-  const upcomingCount = appointments.filter((a) =>
-    ["Pending", "Confirmed", "Rescheduled"].includes(a.status)
-  ).length;
+  const confirmedCount = appointments.filter((a) => a.status === "Confirmed").length;
+  const inProgressCount = appointments.filter((a) => a.status === "In Progress").length;
   const completedCount = appointments.filter((a) => a.status === "Completed").length;
 
   const getStatusBadge = (status) => {
@@ -86,6 +103,8 @@ export default function AppointmentQueuePage() {
         return "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300";
       case "Confirmed":
         return "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300";
+      case "In Progress":
+        return "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300 animate-pulse";
       case "Completed":
         return "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300";
       case "Cancelled":
@@ -98,18 +117,19 @@ export default function AppointmentQueuePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Consultation Queue & Appointments"
-        description="Manage patient bookings, approve requests, and conduct clinical visits."
+        title="Consultation Queue & Clinical Schedule"
+        description="Review pending appointment requests, manage confirmed queues, and conduct consultations."
       />
 
       {/* Tabs and Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Tabs */}
         <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 dark:border-slate-800 dark:bg-slate-900">
           {[
             { id: "all", label: "All", count: appointments.length },
-            { id: "requests", label: "Requests", count: requestedCount, highlight: requestedCount > 0 },
-            { id: "upcoming", label: "Upcoming", count: upcomingCount },
+            { id: "requests", label: "Pending Requests", count: requestedCount, highlight: requestedCount > 0 },
+            { id: "confirmed", label: "Confirmed", count: confirmedCount },
+            { id: "inprogress", label: "In Progress", count: inProgressCount, highlight: inProgressCount > 0 },
             { id: "completed", label: "Completed", count: completedCount },
             { id: "cancelled", label: "Cancelled" },
           ].map((tab) => {
@@ -148,10 +168,10 @@ export default function AppointmentQueuePage() {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
             type="text"
-            placeholder="Search patient or reason..."
+            placeholder="Search patient, UID, or reason..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+            className="w-full rounded-2xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white shadow-sm"
           />
         </div>
       </div>
@@ -160,17 +180,20 @@ export default function AppointmentQueuePage() {
       {filtered.length === 0 ? (
         <EmptyState
           icon={CalendarClock}
-          title="No Appointments Found"
+          title="No Appointments in this Queue"
           description={
             searchTerm
               ? `No appointments found matching "${searchTerm}".`
-              : `You have no ${activeTab === "all" ? "" : activeTab} appointments in this queue.`
+              : `You have no appointments currently in the ${activeTab} queue.`
           }
         />
       ) : (
         <div className="grid gap-4">
           {filtered.map((apt) => {
             const isRequest = apt.status === "Requested";
+            const isCompleted = apt.status === "Completed";
+            const isInProgress = apt.status === "In Progress";
+
             return (
               <div
                 key={apt._id}
@@ -221,7 +244,7 @@ export default function AppointmentQueuePage() {
                         onClick={() => handleAction(apt._id, "reject")}
                         icon={XCircle}
                       >
-                        Reject
+                        Decline
                       </Button>
                       <Button
                         variant="primary"
@@ -240,16 +263,25 @@ export default function AppointmentQueuePage() {
                         onClick={() => setSelectedDossierPatientId(apt.patient?._id)}
                         icon={FileText}
                       >
-                        EHR Record
+                        EHR Dossier
                       </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => navigate(`/doctor/appointments/${apt._id}`)}
-                        icon={Stethoscope}
-                      >
-                        {apt.status === "Completed" ? "View Summary" : "Consult"}
-                      </Button>
+
+                      {!isCompleted ? (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => startConsultation(apt)}
+                          icon={Stethoscope}
+                        >
+                          {isInProgress ? "Resume Consultation" : "Start Consultation"}
+                        </Button>
+                      ) : (
+                        <Link to={`/doctor/appointments/${apt._id}`}>
+                          <Button size="sm" variant="secondary" icon={Eye}>
+                            View Summary
+                          </Button>
+                        </Link>
+                      )}
                     </>
                   )}
                 </div>
@@ -258,6 +290,17 @@ export default function AppointmentQueuePage() {
           })}
         </div>
       )}
+
+      {/* Interactive Consultation Suite Modal */}
+      <ConsultationSuiteModal
+        isOpen={consultationModalOpen}
+        onClose={() => {
+          setConsultationModalOpen(false);
+          setConsultationTarget(null);
+        }}
+        appointment={consultationTarget}
+        onConsultationCompleted={() => fetchAppointments()}
+      />
 
       {/* Patient Dossier Modal */}
       <PatientDossierModal
@@ -269,9 +312,9 @@ export default function AppointmentQueuePage() {
       {/* Accept / Reject Dialog */}
       <ConfirmDialog
         isOpen={confirmModal.open}
-        title={confirmModal.action === "accept" ? "Accept Appointment" : "Reject Appointment"}
+        title={confirmModal.action === "accept" ? "Accept Appointment" : "Decline Appointment"}
         description={`Are you sure you want to ${confirmModal.action} this appointment?`}
-        confirmLabel={confirmModal.action === "accept" ? "Accept" : "Reject"}
+        confirmLabel={confirmModal.action === "accept" ? "Accept" : "Decline"}
         isDestructive={confirmModal.action === "reject"}
         onConfirm={confirmAction}
         onCancel={() => setConfirmModal({ open: false, id: null, action: null })}

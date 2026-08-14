@@ -68,6 +68,19 @@ async function getPatientDossier(req, res) {
   }
 }
 
+async function completeConsultation(req, res) {
+  try {
+    const result = await doctorService.completeConsultation(req.user.id, req.body);
+    return res.status(200).json({
+      message: "Consultation completed and saved to EHR successfully.",
+      ...result,
+    });
+  } catch (error) {
+    console.error("Error completing consultation:", error);
+    return res.status(500).json({ message: error.message || "Failed to complete consultation." });
+  }
+}
+
 async function issuePrescription(req, res) {
   try {
     const { patientId } = req.params;
@@ -149,6 +162,7 @@ module.exports = {
   getDashboard,
   getPatients,
   getPatientDossier,
+  completeConsultation,
   issuePrescription,
   addClinicalNotes,
   uploadToPatient,

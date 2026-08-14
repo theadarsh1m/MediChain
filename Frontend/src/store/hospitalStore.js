@@ -4,15 +4,18 @@ import {
   updateHospitalProfileRequest,
   updateHospitalBedsRequest,
   fetchHospitalDashboardRequest,
-  fetchHospitalStatsRequest,
   fetchHospitalDoctorsRequest,
+  updateDoctorStatusRequest,
+  assignDoctorDepartmentRequest,
   onboardDoctorRequest,
   affiliateDoctorRequest,
   fetchHospitalPatientsRequest,
   admitPatientRequest,
   fetchHospitalDepartmentsRequest,
+  fetchHospitalAppointmentsRequest,
+  reassignHospitalAppointmentRequest,
+  cancelHospitalAppointmentRequest,
   fetchHospitalReportsRequest,
-  fetchHospitalActivityRequest,
   fetchHospitalSettingsRequest,
   updateHospitalSettingsRequest,
 } from "../api/hospital";
@@ -20,12 +23,11 @@ import {
 export const useHospitalStore = create((set, get) => ({
   profile: null,
   dashboard: null,
-  stats: null,
   doctors: [],
   patients: [],
   departments: [],
+  appointments: [],
   reports: null,
-  activity: [],
   settings: null,
   loading: false,
   error: null,
@@ -92,24 +94,10 @@ export const useHospitalStore = create((set, get) => ({
     }
   },
 
-  fetchStats: async () => {
+  fetchDoctors: async (search = "", department = "") => {
     set({ loading: true, error: null });
     try {
-      const stats = await fetchHospitalStatsRequest();
-      set({ stats, loading: false });
-      return stats;
-    } catch (err) {
-      set({
-        error: err.response?.data?.message || err.message || "Failed to fetch stats",
-        loading: false,
-      });
-    }
-  },
-
-  fetchDoctors: async (search = "") => {
-    set({ loading: true, error: null });
-    try {
-      const doctors = await fetchHospitalDoctorsRequest(search);
+      const doctors = await fetchHospitalDoctorsRequest(search, department);
       set({ doctors, loading: false });
       return doctors;
     } catch (err) {
@@ -117,6 +105,46 @@ export const useHospitalStore = create((set, get) => ({
         error: err.response?.data?.message || err.message || "Failed to fetch doctors",
         loading: false,
       });
+    }
+  },
+
+  updateDoctorStatus: async (doctorId, status) => {
+    set({ loading: true, error: null });
+    try {
+      const doctor = await updateDoctorStatusRequest(doctorId, status);
+      set((state) => ({
+        doctors: state.doctors.map((d) => (d._id === doctorId ? { ...d, status } : d)),
+        loading: false,
+      }));
+      get().fetchDashboard();
+      return doctor;
+    } catch (err) {
+      set({
+        error: err.response?.data?.message || err.message || "Failed to update doctor status",
+        loading: false,
+      });
+      throw err;
+    }
+  },
+
+  assignDoctorDepartment: async (doctorId, department) => {
+    set({ loading: true, error: null });
+    try {
+      const doctor = await assignDoctorDepartmentRequest(doctorId, department);
+      set((state) => ({
+        doctors: state.doctors.map((d) =>
+          d._id === doctorId ? { ...d, department, specialization: department } : d
+        ),
+        loading: false,
+      }));
+      get().fetchDashboard();
+      return doctor;
+    } catch (err) {
+      set({
+        error: err.response?.data?.message || err.message || "Failed to assign doctor department",
+        loading: false,
+      });
+      throw err;
     }
   },
 
@@ -158,10 +186,10 @@ export const useHospitalStore = create((set, get) => ({
     }
   },
 
-  fetchPatients: async (search = "") => {
+  fetchPatients: async (search = "", filter = "all") => {
     set({ loading: true, error: null });
     try {
-      const patients = await fetchHospitalPatientsRequest(search);
+      const patients = await fetchHospitalPatientsRequest(search, filter);
       set({ patients, loading: false });
       return patients;
     } catch (err) {
@@ -205,6 +233,58 @@ export const useHospitalStore = create((set, get) => ({
     }
   },
 
+  fetchAppointments: async (search = "", department = "All", status = "All") => {
+    set({ loading: true, error: null });
+    try {
+      const appointments = await fetchHospitalAppointmentsRequest(search, department, status);
+      set({ appointments, loading: false });
+      return appointments;
+    } catch (err) {
+      set({
+        error: err.response?.data?.message || err.message || "Failed to fetch appointments",
+        loading: false,
+      });
+    }
+  },
+
+  reassignAppointment: async (appointmentId, doctorId) => {
+    set({ loading: true, error: null });
+    try {
+      const appointment = await reassignHospitalAppointmentRequest(appointmentId, doctorId);
+      set((state) => ({
+        appointments: state.appointments.map((a) => (a._id === appointmentId ? appointment : a)),
+        loading: false,
+      }));
+      get().fetchDashboard();
+      return appointment;
+    } catch (err) {
+      set({
+        error: err.response?.data?.message || err.message || "Failed to reassign appointment",
+        loading: false,
+      });
+      throw err;
+    }
+  },
+
+  cancelAppointment: async (appointmentId, reason) => {
+    set({ loading: true, error: null });
+    try {
+      const appointment = await cancelHospitalAppointmentRequest(appointmentId, reason);
+      set((state) => ({
+        appointments: state.appointments.map((a) => (a._id === appointmentId ? appointment : a)),
+        loading: false,
+      }));
+      get().fetchDashboard();
+      return appointment;
+    } catch (err) {
+      set({
+        error: err.response?.data?.message || err.message || "Failed to cancel appointment",
+        loading: false,
+      });
+      throw err;
+    }
+  },
+
   fetchReports: async () => {
     set({ loading: true, error: null });
     try {
@@ -214,20 +294,6 @@ export const useHospitalStore = create((set, get) => ({
     } catch (err) {
       set({
         error: err.response?.data?.message || err.message || "Failed to fetch reports",
-        loading: false,
-      });
-    }
-  },
-
-  fetchActivity: async () => {
-    set({ loading: true, error: null });
-    try {
-      const activity = await fetchHospitalActivityRequest();
-      set({ activity, loading: false });
-      return activity;
-    } catch (err) {
-      set({
-        error: err.response?.data?.message || err.message || "Failed to fetch activity",
         loading: false,
       });
     }
