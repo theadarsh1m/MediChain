@@ -25,8 +25,12 @@ import HospitalLayout from "./layouts/HospitalLayout";
 import HospitalDashboardPage from "./pages/hospital/HospitalDashboardPage";
 import HospitalPlaceholderPage from "./pages/hospital/HospitalPlaceholderPage";
 import DoctorLayout from "./layouts/DoctorLayout";
+import DoctorDashboardPage from "./pages/doctor/DoctorDashboardPage";
 import AppointmentQueuePage from "./pages/doctor/AppointmentQueuePage";
 import AppointmentDetailsPage from "./pages/doctor/AppointmentDetailsPage";
+import DoctorPatientsPage from "./pages/doctor/DoctorPatientsPage";
+import DoctorProfilePage from "./pages/doctor/DoctorProfilePage";
+import DoctorSettingsPage from "./pages/doctor/DoctorSettingsPage";
 import AppointmentTablePage from "./pages/hospital/AppointmentTablePage";
 
 function renderPatientRoutes() {
@@ -82,11 +86,12 @@ export default function App() {
             <Route element={<RoleProtectedRoute allowedRoles={["doctor"]} />}>
               <Route path="/doctor" element={<DoctorLayout />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={<PortalPlaceholder title="Doctor Dashboard" />} />
+                <Route path="dashboard" element={<DoctorDashboardPage />} />
                 <Route path="appointments" element={<AppointmentQueuePage />} />
                 <Route path="appointments/:id" element={<AppointmentDetailsPage />} />
-                <Route path="profile" element={<PortalPlaceholder title="Doctor Profile" />} />
-                <Route path="settings" element={<PortalPlaceholder title="Doctor Settings" />} />
+                <Route path="patients" element={<DoctorPatientsPage />} />
+                <Route path="profile" element={<DoctorProfilePage />} />
+                <Route path="settings" element={<DoctorSettingsPage />} />
               </Route>
             </Route>
             <Route element={<RoleProtectedRoute allowedRoles={["hospital"]} />}>

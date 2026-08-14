@@ -1,20 +1,35 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { CheckCircle, XCircle, CalendarClock, Eye } from "lucide-react";
+import {
+  CheckCircle,
+  XCircle,
+  CalendarClock,
+  Eye,
+  Search,
+  Filter,
+  Stethoscope,
+  FileText,
+  Clock,
+  Calendar,
+  AlertCircle,
+} from "lucide-react";
 
 import Button from "../../components/ui/Button";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import EmptyState from "../../components/ui/EmptyState";
 import Loader from "../../components/ui/Loader";
 import PageHeader from "../../components/ui/PageHeader";
-import Section from "../../components/ui/Section";
+import PatientDossierModal from "../../components/doctor/PatientDossierModal";
 import { useAppointmentStore } from "../../store/appointmentStore";
 
 export default function AppointmentQueuePage() {
   const navigate = useNavigate();
   const { appointments, fetchAppointments, updateStatus, loading } = useAppointmentStore();
   const [confirmModal, setConfirmModal] = useState({ open: false, id: null, action: null });
+  const [activeTab, setActiveTab] = useState("all"); // "all" | "requests" | "upcoming" | "completed" | "cancelled"
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDossierPatientId, setSelectedDossierPatientId] = useState(null);
 
   useEffect(() => {
     fetchAppointments();
@@ -37,84 +52,221 @@ export default function AppointmentQueuePage() {
   };
 
   if (loading && appointments.length === 0) {
-    return <Loader label="Loading your queue..." />;
+    return <Loader label="Loading your appointment queue..." />;
   }
 
-  const requested = appointments.filter((a) => a.status === "Requested");
-  const upcoming = appointments.filter((a) => ["Pending", "Confirmed", "Rescheduled"].includes(a.status));
+  // Filter appointments
+  const filtered = appointments.filter((apt) => {
+    const matchesSearch =
+      !searchTerm ||
+      apt.patient?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      apt.patient?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      apt.reason?.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const AppointmentCard = ({ apt, isRequest }) => (
-    <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${isRequest ? "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"}`}>
-            {apt.status}
-          </span>
-          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            {new Date(apt.appointmentDate).toLocaleDateString()} at {apt.appointmentTime}
-          </span>
-        </div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-          {apt.patient?.name}
-        </h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          <strong>Reason:</strong> {apt.reason}
-        </p>
-      </div>
+    if (!matchesSearch) return false;
 
-      <div className="flex flex-col gap-3 sm:items-end">
-        {isRequest ? (
-          <div className="flex gap-2">
-            <Button variant="danger" size="sm" onClick={() => handleAction(apt._id, "reject")} icon={XCircle}>
-              Reject
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => handleAction(apt._id, "accept")} icon={CheckCircle}>
-              Accept
-            </Button>
-          </div>
-        ) : (
-          <Button variant="secondary" size="sm" onClick={() => navigate(`/doctor/appointments/${apt._id}`)} icon={Eye}>
-            View Details
-          </Button>
-        )}
-      </div>
-    </div>
-  );
+    if (activeTab === "requests") return apt.status === "Requested";
+    if (activeTab === "upcoming")
+      return ["Pending", "Confirmed", "Rescheduled"].includes(apt.status);
+    if (activeTab === "completed") return apt.status === "Completed";
+    if (activeTab === "cancelled") return apt.status === "Cancelled";
+
+    return true;
+  });
+
+  const requestedCount = appointments.filter((a) => a.status === "Requested").length;
+  const upcomingCount = appointments.filter((a) =>
+    ["Pending", "Confirmed", "Rescheduled"].includes(a.status)
+  ).length;
+  const completedCount = appointments.filter((a) => a.status === "Completed").length;
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "Requested":
+        return "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300";
+      case "Confirmed":
+        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300";
+      case "Completed":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300";
+      case "Cancelled":
+        return "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300";
+      default:
+        return "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300";
+    }
+  };
 
   return (
-    <div className="space-y-8">
-      <PageHeader title="Appointment Queue" description="Manage your pending requests and upcoming consultations." />
+    <div className="space-y-6">
+      <PageHeader
+        title="Consultation Queue & Appointments"
+        description="Manage patient bookings, approve requests, and conduct clinical visits."
+      />
 
-      <Section title="New Requests" description="Appointments waiting for your approval.">
-        {requested.length > 0 ? (
-          <div className="flex flex-col gap-4">
-            {requested.map((apt) => (
-              <AppointmentCard key={apt._id} apt={apt} isRequest={true} />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-slate-200 p-8 text-center text-slate-500 dark:border-slate-800 dark:text-slate-400">
-            No new appointment requests.
-          </div>
-        )}
-      </Section>
+      {/* Tabs and Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Tabs */}
+        <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 dark:border-slate-800 dark:bg-slate-900">
+          {[
+            { id: "all", label: "All", count: appointments.length },
+            { id: "requests", label: "Requests", count: requestedCount, highlight: requestedCount > 0 },
+            { id: "upcoming", label: "Upcoming", count: upcomingCount },
+            { id: "completed", label: "Completed", count: completedCount },
+            { id: "cancelled", label: "Cancelled" },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold transition whitespace-nowrap ${
+                  isActive
+                    ? "bg-blue-600 text-white dark:bg-emerald-500 dark:text-slate-950"
+                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                }`}
+              >
+                <span>{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span
+                    className={`rounded-full px-1.5 py-0.2 text-[10px] ${
+                      isActive
+                        ? "bg-white/20 text-white dark:bg-black/20 dark:text-slate-950"
+                        : tab.highlight
+                        ? "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200"
+                        : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-      <Section title="Upcoming Appointments">
-        {upcoming.length > 0 ? (
-          <div className="flex flex-col gap-4">
-            {upcoming.map((apt) => (
-              <AppointmentCard key={apt._id} apt={apt} isRequest={false} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            icon={CalendarClock}
-            title="Queue is empty"
-            description="You don't have any confirmed upcoming appointments."
+        {/* Search Box */}
+        <div className="relative min-w-[240px]">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <input
+            type="text"
+            placeholder="Search patient or reason..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full rounded-2xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
           />
-        )}
-      </Section>
+        </div>
+      </div>
 
+      {/* Appointments List */}
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={CalendarClock}
+          title="No Appointments Found"
+          description={
+            searchTerm
+              ? `No appointments found matching "${searchTerm}".`
+              : `You have no ${activeTab === "all" ? "" : activeTab} appointments in this queue.`
+          }
+        />
+      ) : (
+        <div className="grid gap-4">
+          {filtered.map((apt) => {
+            const isRequest = apt.status === "Requested";
+            return (
+              <div
+                key={apt._id}
+                className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex items-start gap-4 min-w-0">
+                  <div className="h-12 w-12 shrink-0 rounded-2xl bg-blue-50 dark:bg-emerald-500/10 flex items-center justify-center font-bold text-blue-700 dark:text-emerald-300 overflow-hidden border border-slate-200 dark:border-slate-800">
+                    {apt.patient?.profilePic ? (
+                      <img src={apt.patient.profilePic} alt={apt.patient.name} className="h-full w-full object-cover" />
+                    ) : (
+                      apt.patient?.name?.charAt(0) || "P"
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${getStatusBadge(apt.status)}`}>
+                        {apt.status}
+                      </span>
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                        <Calendar size={13} />
+                        {new Date(apt.appointmentDate).toLocaleDateString()} at {apt.appointmentTime}
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">
+                      {apt.patient?.name || "Patient"}
+                    </h3>
+
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                      <strong className="text-slate-700 dark:text-slate-300">Reason:</strong> {apt.reason}
+                    </p>
+
+                    {apt.diagnosis && (
+                      <p className="text-xs font-semibold text-blue-600 dark:text-emerald-400 mt-1">
+                        Diagnosis: {apt.diagnosis}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 sm:self-center">
+                  {isRequest ? (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleAction(apt._id, "reject")}
+                        icon={XCircle}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleAction(apt._id, "accept")}
+                        icon={CheckCircle}
+                      >
+                        Accept
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setSelectedDossierPatientId(apt.patient?._id)}
+                        icon={FileText}
+                      >
+                        EHR Record
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => navigate(`/doctor/appointments/${apt._id}`)}
+                        icon={Stethoscope}
+                      >
+                        {apt.status === "Completed" ? "View Summary" : "Consult"}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Patient Dossier Modal */}
+      <PatientDossierModal
+        isOpen={Boolean(selectedDossierPatientId)}
+        onClose={() => setSelectedDossierPatientId(null)}
+        patientId={selectedDossierPatientId}
+      />
+
+      {/* Accept / Reject Dialog */}
       <ConfirmDialog
         isOpen={confirmModal.open}
         title={confirmModal.action === "accept" ? "Accept Appointment" : "Reject Appointment"}
