@@ -11,11 +11,17 @@ const doctorRoutes = require("./routes/doctorRoutes");
 const hospitalRoutes = require("./routes/hospitalRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const publicRoutes = require("./routes/publicRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 const app = express();
 
 // CORS: support multiple origins (local dev + production)
 const allowedOrigins = [
   process.env.Frontend_URL,
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
   "https://medichain.theadarsh.me",
   "https://medichainreal.netlify.app",
 ].filter(Boolean);
@@ -57,6 +63,8 @@ app.use("/api/doctor", doctorRoutes);
 app.use("/hospital", hospitalRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/public", publicRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/ai", aiRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to MediVault API" });

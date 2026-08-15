@@ -32,6 +32,7 @@ import EmptyState from "../../ui/EmptyState";
 import PrescriptionViewerModal from "../../patient/PrescriptionViewerModal";
 import DoctorDetailModal from "../../patient/DoctorDetailModal";
 import UploadReportModal from "../modals/UploadReportModal";
+import AIHealthSummaryCard from "../presentational/AIHealthSummaryCard";
 import { useAppointmentStore } from "../../../store/appointmentStore";
 import { uploadReportRequest } from "../../../api/patient";
 import { useAppDispatch } from "../../../hooks/reduxHooks";
@@ -287,6 +288,12 @@ export default function PatientDashboardContainer({ patient }) {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column (2 Cols) */}
         <div className="space-y-6 lg:col-span-2">
+          {/* AI Health Summary Card */}
+          <AIHealthSummaryCard
+            onOpenBook={() => navigate("/patient/appointments/book")}
+            onOpenUpload={() => setActiveModal("upload")}
+          />
+
           {/* 3. 📅 Next Appointment (Hero Module) */}
           <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-colors">
             <div className="flex items-center justify-between mb-4">
